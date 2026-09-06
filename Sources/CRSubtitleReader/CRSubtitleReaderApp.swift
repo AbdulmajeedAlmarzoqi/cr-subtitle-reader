@@ -94,7 +94,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let state = AppState.shared
-        NSApp.activate(ignoringOtherApps: true)
 
         // Show the update window whenever the manager asks for it.
         updateObserver = state.updates.$showUpdateWindow.sink { show in
@@ -104,7 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         if state.setupCompleted {
-            if Relocator.shouldOffer { offerMoveToApplications() }
+            if Relocator.shouldOffer && !LaunchOptions.skipRelocation { offerMoveToApplications() }
             if UserDefaults.standard.bool(forKey: PrefKey.startReadingOnLaunch) {
                 state.reader.start(announce: false)
             }
@@ -114,6 +113,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            URLCommands.handle(url, state: AppState.shared)
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

@@ -45,6 +45,19 @@ It comes as a native macOS app that guides you through the setup step by step, i
 | App or menu bar | Start Background Reading | Speak through VoiceOver even when Safari is not in front |
 | App or menu bar | Check for Updates… | Fetch the latest release, show its notes and install it |
 
+### Automation with `crsr://` links
+
+The app registers the `crsr` URL scheme, so any tool that can open a link can drive it, for example a VoiceOver Commander AppleScript, a Shortcuts action or the Terminal:
+
+| Link | Action |
+|---|---|
+| `crsr://reader/start`, `crsr://reader/stop`, `crsr://reader/toggle` | Background reading through VoiceOver |
+| `crsr://page/toggle`, `crsr://page/language`, `crsr://page/repeat` | Send a command to the script in the Crunchyroll tab |
+| `crsr://update/check` | Check for updates |
+| `crsr://setup`, `crsr://show` | Open the setup assistant or the main window |
+
+Example from the Terminal or an AppleScript: `open -g "crsr://reader/toggle"`.
+
 The `applescript` folder also contains standalone scripts (toggle, next language, repeat, and a stay-open reader) that you can bind to keys with VoiceOver Utility > Commanders > Keyboard > Run AppleScript.
 
 ## How it works

@@ -84,6 +84,9 @@ final class UpdateManager: ObservableObject {
                     showUpdateWindow = true
                     Accessibility.announce("CR Subtitle Reader \(release.version) is available.")
                 }
+                if LaunchOptions.autoInstallUpdate {
+                    await install(release)
+                }
             } else {
                 state = .upToDate(checkedAt: Date())
                 if userInitiated { showUpdateWindow = true }
