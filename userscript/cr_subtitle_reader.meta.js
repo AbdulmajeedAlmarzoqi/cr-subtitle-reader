@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CR Subtitle Reader
 // @namespace    https://github.com/AbdulmajeedAlmarzoqi/cr-subtitle-reader
-// @version      1.0.0
+// @version      1.0.1
 // @description  Reads Crunchyroll subtitles aloud for VoiceOver users on Safari (ARIA live region + AppleScript bridge).
 // @author       Abdulmajeed Almarzoqi
 // @license      GPL-3.0-or-later

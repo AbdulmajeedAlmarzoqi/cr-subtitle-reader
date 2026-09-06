@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CR Subtitle Reader
 // @namespace    https://github.com/AbdulmajeedAlmarzoqi/cr-subtitle-reader
-// @version      1.0.0
+// @version      1.0.1
 // @description  Reads Crunchyroll subtitles aloud for VoiceOver users on Safari (ARIA live region + AppleScript bridge).
 // @author       Abdulmajeed Almarzoqi
 // @license      GPL-3.0-or-later
@@ -58,6 +58,7 @@
 	var ANNOUNCE_LOADED = true;         // announce when a subtitle file has been loaded
 	var STATUS_HOLD_MS = 1500;          // after a status message, hold subtitles so the message can be heard
 	var KEYS = { toggle: 'KeyS', language: 'KeyL', repeat: 'KeyR' };
+	var SCRIPT_VERSION = '1.0.1';
 
 	var STR = {
 		on: 'Subtitle reading: on',
@@ -581,8 +582,9 @@
 	}
 
 	// ===================== Commands =====================
-	function toggleEnabled() {
-		var enabled = !isEnabled();
+	function toggleEnabled() { setEnabledAndAnnounce(!isEnabled()); }
+
+	function setEnabledAndAnnounce(enabled) {
 		setEnabled(enabled);
 		lastEnabledSeen = enabled;
 		if (!enabled) { lastSubtitle = ''; emptySubtitleTime = 0; }
@@ -604,11 +606,14 @@
 
 	function runCommand(cmd) {
 		if (cmd === 'toggle') toggleEnabled();
+		else if (cmd === 'mute') setEnabledAndAnnounce(false);
+		else if (cmd === 'unmute') setEnabledAndAnnounce(true);
 		else if (cmd === 'language') cycleLanguage();
 		else if (cmd === 'repeat') repeatSubtitle();
 	}
 
-	// Commands from the app / AppleScript arrive through localStorage as "command<tab>timestamp"
+	// Commands from the app / AppleScript arrive through localStorage as "command<tab>timestamp":
+	// toggle, mute, unmute, language, repeat
 	function pollExternalCommand(cmdValue) {
 		if (!cmdValue || cmdValue === lastCmdSeen) return false;
 		lastCmdSeen = cmdValue;
@@ -718,7 +723,7 @@
 	window.__crsrDebug = {
 		get state() {
 			return {
-				version: '1.0.0', isTop: isTop, enabled: isEnabled(), bridgeActive: bridgeActive(),
+				version: SCRIPT_VERSION, isTop: isTop, enabled: isEnabled(), bridgeActive: bridgeActive(),
 				currentLang: currentLang, profileLang: profileLang, audioLocale: audioLocale,
 				langs: Object.keys(allSubtitleUrls), cues: subtitleCues.length, lastSubtitle: lastSubtitle,
 				hasVideo: !!getVideo(), videoTime: getVideo() ? getVideo().currentTime : null,

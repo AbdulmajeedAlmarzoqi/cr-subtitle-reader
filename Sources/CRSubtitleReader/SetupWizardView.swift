@@ -282,20 +282,26 @@ struct SetupWizardView: View {
 
     private var finish: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Everything is ready. Press Finish: this window closes and CR Subtitle Reader keeps working from the menu bar. Open any episode on Crunchyroll in Safari and VoiceOver reads the subtitles as they appear.")
+            Text("Everything is ready. Open any episode on Crunchyroll in Safari and VoiceOver reads the subtitles as they appear, as long as Safari is the front application.")
+            Text("Keeping the app in the menu bar adds “Speak in Background”: the app then reads through VoiceOver while you are in other applications, and offers mute, language and update commands from the menu bar. If you only listen inside Safari, you can let the app quit after setup.")
             VStack(alignment: .leading, spacing: 6) {
                 Text("Shortcuts inside the Crunchyroll page:")
                 Text("• Option+Shift+S: turn subtitle reading on or off")
                 Text("• Option+Shift+L: switch to the next subtitle language")
                 Text("• Option+Shift+R: repeat the current line")
             }
+            Toggle("Keep CR Subtitle Reader running in the menu bar after setup", isOn: $state.stayInMenuBar)
             Toggle("Launch CR Subtitle Reader at login", isOn: Binding(
                 get: { state.launchAtLogin },
                 set: { state.setLaunchAtLogin($0) }
             ))
+            .disabled(!state.stayInMenuBar)
+            Toggle("Start speaking in the background as soon as the app launches", isOn: $startReadingOnLaunch)
+                .disabled(!state.stayInMenuBar)
             Toggle("Check for updates automatically", isOn: $autoCheckUpdates)
-            Toggle("Start background reading through VoiceOver when the app launches", isOn: $startReadingOnLaunch)
-            Text("Change these any time in Settings (Command+Comma). Closing or minimizing the window keeps the app running; Command+Q quits it.")
+            Text(state.stayInMenuBar
+                 ? "Press Finish: the window closes and the app waits in the menu bar. Closing or minimizing the window later keeps it running; Command+Q quits it."
+                 : "Press Finish: the app quits. Open it again whenever you want to check the setup or change a setting.")
                 .foregroundStyle(.secondary)
         }
     }

@@ -56,6 +56,8 @@ final class PrerequisiteChecker: ObservableObject {
     @Published private(set) var safariJavaScript: ProbeResult = .unknown
     @Published private(set) var voiceOverControl: ProbeResult = .unknown
     @Published private(set) var scriptActivity: ScriptActivity = .unknown
+    /// Whether the script in the current Crunchyroll tab is announcing (nil when unknown).
+    @Published private(set) var pageReadingEnabled: Bool?
 
     private let bridge: AppleScriptBridge
 
@@ -118,6 +120,7 @@ final class PrerequisiteChecker: ObservableObject {
             let activity: ScriptActivity = payload.isEmpty ? .noCrunchyrollTab : .notActive
             if activity != scriptActivity { Log.info("Script activity: \(activity.label)") }
             scriptActivity = activity
+            pageReadingEnabled = nil
             return
         }
         guard let data = state.data(using: .utf8),
@@ -128,6 +131,7 @@ final class PrerequisiteChecker: ObservableObject {
         let version = json["version"] as? String ?? "?"
         let language = json["currentLang"] as? String ?? ""
         let cues = json["cues"] as? Int ?? 0
+        pageReadingEnabled = json["enabled"] as? Bool
         let activity = ScriptActivity.active(version: version, language: language, cues: cues)
         if activity != scriptActivity { Log.info("Script activity: \(activity.label)") }
         scriptActivity = activity

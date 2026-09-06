@@ -16,7 +16,7 @@ final class ReaderEngine: ObservableObject {
 
         var description: String {
             switch self {
-            case .stopped: return "Off"
+            case .stopped: return "Off. Safari reads the subtitles while it is in front."
             case .waitingForCrunchyroll: return "On. Waiting for a Crunchyroll tab in Safari's front window."
             case .reading: return "On. Reading subtitles."
             case .javaScriptBlocked: return "Safari is blocking JavaScript from Apple Events. Enable it in Safari's Developer settings."
@@ -61,7 +61,7 @@ final class ReaderEngine: ObservableObject {
         status = .waitingForCrunchyroll
         Log.info("Reader started")
         if announce {
-            speak("Reading on")
+            speak("Speaking in background: on")
         }
         schedule(after: 0.1)
     }
@@ -74,7 +74,7 @@ final class ReaderEngine: ObservableObject {
         isRunning = false
         status = .stopped
         if announce {
-            speak("Reading off")
+            speak("Speaking in background: off")
         }
     }
 

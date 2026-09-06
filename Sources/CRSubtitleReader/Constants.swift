@@ -47,4 +47,5 @@ enum PrefKey {
     static let declinedMoveToApplications = "declinedMoveToApplications"
     static let startReadingOnLaunch = "startReadingOnLaunch"
     static let wizardStep = "wizardStep"
+    static let stayInMenuBar = "stayInMenuBar"
 }

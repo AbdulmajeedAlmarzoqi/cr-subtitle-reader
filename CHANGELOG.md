@@ -2,6 +2,14 @@
 
 All notable changes to CR Subtitle Reader are documented here.
 
+## 1.0.1 — 2026-09-06
+
+- The two switches now say what they do. "Mute Subtitles" silences the script inside Safari (the real off switch); "Speak in Background" makes the app read through VoiceOver while you are in another application. Before, "Background Reading Off" looked like a mute but only handed reading back to Safari.
+- The menu bar menu and the status window show who is reading right now: Safari, the app, or nobody because subtitles are muted.
+- New option at the end of the setup and in Settings: keep the app in the menu bar, or let it quit with its window if you only listen inside Safari.
+- The app refreshes the script inside the Userscripts extension by itself when a build ships a newer one.
+- New `crsr://page/mute` and `crsr://page/unmute` links; Command+Shift+M and Command+Shift+B in the app.
+
 ## 1.0.0 — 2026-09-06
 
 First release.

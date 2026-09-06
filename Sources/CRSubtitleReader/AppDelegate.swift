@@ -4,7 +4,11 @@ import Combine
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
-    private var readingMenuItem: NSMenuItem?
+    private var channelMenuItem: NSMenuItem?
+    private var muteMenuItem: NSMenuItem?
+    private var backgroundMenuItem: NSMenuItem?
+    private var actionsMuteItem: NSMenuItem?
+    private var actionsBackgroundItem: NSMenuItem?
     private var cancellables: Set<AnyCancellable> = []
 
     private var state: AppState { AppState.shared }
@@ -17,7 +21,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.info("Launched \(AppInfo.name) \(AppInfo.version) from \(Bundle.main.bundleURL.path); bridge loaded: \(state.bridge.isLoaded)")
-        installStatusItem()
+        if state.stayInMenuBar { installStatusItem() }
+        state.$stayInMenuBar
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] stay in
+                if stay { self?.installStatusItem() } else { self?.removeStatusItem() }
+            }
+            .store(in: &cancellables)
 
         state.updates.$showUpdateWindow
             .receive(on: RunLoop.main)
@@ -27,11 +38,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             .store(in: &cancellables)
 
         if state.setupCompleted {
-            // Later launches: no window, one word from VoiceOver, then wait in the menu bar.
             if Relocator.shouldOffer && !LaunchOptions.skipRelocation { offerMoveToApplications() }
-            state.sayReady()
-            if UserDefaults.standard.bool(forKey: PrefKey.startReadingOnLaunch) {
-                state.reader.start(announce: false)
+            // A newer script shipped with this build? Refresh the copy inside the extension quietly.
+            state.checker.refreshLocal()
+            if state.checker.scriptInstalled && !state.checker.scriptUpToDate { state.installScript(quiet: true) }
+            if state.stayInMenuBar {
+                // Later launches: no window, one word from VoiceOver, then wait in the menu bar.
+                state.sayReady()
+                if UserDefaults.standard.bool(forKey: PrefKey.startReadingOnLaunch) {
+                    state.reader.start(announce: false)
+                }
+            } else {
+                // Plain setup tool: show the status window; closing it quits.
+                AppWindows.showMain()
             }
         } else {
             AppWindows.showMain()
@@ -39,9 +58,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         state.updates.startAutomaticChecks()
     }
 
-    /// Closing or minimizing windows never quits; Command+Q does.
+    /// With the status item, closing or minimizing windows never quits (Command+Q does).
+    /// Without it, the app is a plain tool and quits together with its last window.
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        false
+        !state.stayInMenuBar
     }
 
     /// Dock click or opening the app again shows the window. (The status item counts as a
@@ -100,9 +120,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         mainMenu.addSubmenu(editMenu)
 
         let actionsMenu = NSMenu(title: "Actions")
-        actionsMenu.addItem(withTitle: "Turn Background Reading On or Off", action: #selector(toggleReading), keyEquivalent: "r")
+        actionsMenu.delegate = self
+        actionsMuteItem = actionsMenu.addItem(withTitle: "Mute Subtitles", action: #selector(pageToggle), keyEquivalent: "m")
+        actionsMuteItem?.keyEquivalentModifierMask = [.command, .shift]
+        actionsBackgroundItem = actionsMenu.addItem(withTitle: "Speak in Background", action: #selector(toggleReading), keyEquivalent: "b")
+        actionsBackgroundItem?.keyEquivalentModifierMask = [.command, .shift]
         actionsMenu.addItem(.separator())
-        actionsMenu.addItem(withTitle: "Toggle Subtitle Reading in Page", action: #selector(pageToggle), keyEquivalent: "")
         actionsMenu.addItem(withTitle: "Next Subtitle Language", action: #selector(pageLanguage), keyEquivalent: "")
         actionsMenu.addItem(withTitle: "Repeat Current Line", action: #selector(pageRepeat), keyEquivalent: "")
         actionsMenu.addItem(.separator())
@@ -138,9 +161,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         let menu = NSMenu()
         menu.delegate = self
-        readingMenuItem = menu.addItem(withTitle: "Turn Background Reading On", action: #selector(toggleReading), keyEquivalent: "")
+        channelMenuItem = menu.addItem(withTitle: "Now: checking…", action: nil, keyEquivalent: "")
+        channelMenuItem?.isEnabled = false
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Toggle Subtitle Reading in Page", action: #selector(pageToggle), keyEquivalent: "")
+        muteMenuItem = menu.addItem(withTitle: "Mute Subtitles", action: #selector(pageToggle), keyEquivalent: "")
+        backgroundMenuItem = menu.addItem(withTitle: "Speak in Background", action: #selector(toggleReading), keyEquivalent: "")
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Next Subtitle Language", action: #selector(pageLanguage), keyEquivalent: "")
         menu.addItem(withTitle: "Repeat Current Line", action: #selector(pageRepeat), keyEquivalent: "")
         menu.addItem(.separator())
@@ -150,13 +176,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(withTitle: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit \(AppInfo.name)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "")
-        for menuItem in menu.items { menuItem.target = menuItem.action == #selector(NSApplication.terminate(_:)) ? NSApp : self }
+        for menuItem in menu.items where menuItem.action != nil {
+            menuItem.target = menuItem.action == #selector(NSApplication.terminate(_:)) ? NSApp : self
+        }
         item.menu = menu
         statusItem = item
     }
 
+    private func removeStatusItem() {
+        if let item = statusItem { NSStatusBar.system.removeStatusItem(item) }
+        statusItem = nil
+    }
+
+    /// Refreshes the dynamic items right before a menu opens.
     func menuNeedsUpdate(_ menu: NSMenu) {
-        readingMenuItem?.title = state.reader.isRunning ? "Turn Background Reading Off" : "Turn Background Reading On"
+        state.checker.probeScript()
+        let muted = state.checker.pageReadingEnabled == false
+        let muteTitle = muted ? "Unmute Subtitles" : "Mute Subtitles"
+        let backgroundOn = state.reader.isRunning
+        for item in [muteMenuItem, actionsMuteItem] { item?.title = muteTitle }
+        for item in [backgroundMenuItem, actionsBackgroundItem] { item?.state = backgroundOn ? .on : .off }
+        channelMenuItem?.title = "Now: \(state.channelDescription)"
     }
 
     // MARK: Actions
@@ -166,7 +206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func showMainWindow() { AppWindows.showMain() }
     @objc private func checkForUpdates() { Task { await state.updates.check(userInitiated: true) } }
     @objc private func toggleReading() { state.reader.toggle() }
-    @objc private func pageToggle() { state.sendPageCommand("toggle", label: "the toggle command") }
+    @objc private func pageToggle() { state.toggleMutePage() }
     @objc private func pageLanguage() { state.sendPageCommand("language", label: "the language command") }
     @objc private func pageRepeat() { state.sendPageCommand("repeat", label: "the repeat command") }
     @objc private func openCrunchyroll() { state.checker.openInSafari(AppInfo.crunchyrollURL) }

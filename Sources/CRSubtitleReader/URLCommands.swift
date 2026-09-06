@@ -3,7 +3,8 @@ import AppKit
 
 /// `crsr://` URLs let VoiceOver Commander, Shortcuts or the Terminal drive the app without UI:
 ///   crsr://reader/start | stop | toggle      background reading through VoiceOver
-///   crsr://page/toggle | language | repeat   commands for the userscript in the Crunchyroll tab
+///   crsr://page/mute | unmute | toggle       silence or resume the script in the Crunchyroll tab
+///   crsr://page/language | repeat            next subtitle language / repeat the current line
 ///   crsr://update/check                      check for updates and show the result
 ///   crsr://setup                             open the setup assistant
 ///   crsr://show                              bring the main window to the front
@@ -18,7 +19,9 @@ enum URLCommands {
         case ["reader", "start"]: state.reader.start()
         case ["reader", "stop"]: state.reader.stop()
         case ["reader", "toggle"]: state.reader.toggle()
-        case ["page", "toggle"]: state.sendPageCommand("toggle", label: "the toggle command")
+        case ["page", "toggle"]: state.toggleMutePage()
+        case ["page", "mute"]: state.mutePage()
+        case ["page", "unmute"]: state.unmutePage()
         case ["page", "language"]: state.sendPageCommand("language", label: "the language command")
         case ["page", "repeat"]: state.sendPageCommand("repeat", label: "the repeat command")
         case ["update", "check"]: Task { await state.updates.check(userInitiated: true) }

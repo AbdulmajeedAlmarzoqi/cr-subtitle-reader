@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AppKit
 
 /// Single source of truth shared by the app scenes and the app delegate.
 @MainActor
@@ -17,6 +18,11 @@ final class AppState: ObservableObject {
     @Published var showWizard: Bool
     @Published var installMessage: String = ""
     @Published var launchAtLogin: Bool = LaunchAtLogin.isEnabled
+    /// Keep a status item and stay running after the window closes. Off = a plain setup tool that
+    /// quits with its window; subtitles are then read inside Safari only.
+    @Published var stayInMenuBar: Bool {
+        didSet { UserDefaults.standard.set(stayInMenuBar, forKey: PrefKey.stayInMenuBar) }
+    }
 
     private var cancellables: Set<AnyCancellable> = []
 
@@ -29,6 +35,7 @@ final class AppState: ObservableObject {
         let completed = UserDefaults.standard.bool(forKey: PrefKey.setupCompleted)
         setupCompleted = completed
         showWizard = !completed
+        stayInMenuBar = UserDefaults.standard.object(forKey: PrefKey.stayInMenuBar) as? Bool ?? true
 
         // Re-publish nested changes so SwiftUI views observing AppState refresh.
         for publisher in [checker.objectWillChange.eraseToAnyPublisher(),
@@ -40,7 +47,7 @@ final class AppState: ObservableObject {
 
     /// Installs (or updates) the userscript into the resolved folder.
     @discardableResult
-    func installScript() -> Bool {
+    func installScript(quiet: Bool = false) -> Bool {
         let directory = ScriptInstaller.resolvedDirectory()
         do {
             let result = try ScriptInstaller.install(to: directory)
@@ -50,7 +57,8 @@ final class AppState: ObservableObject {
             }
             installMessage = message
             checker.refreshLocal()
-            Accessibility.announce("Script installed, version \(result.version).")
+            Log.info(message)
+            if !quiet { Accessibility.announce("Script installed, version \(result.version).") }
             return true
         } catch {
             installMessage = "Could not install the script: \(error.localizedDescription)"
@@ -96,8 +104,35 @@ final class AppState: ObservableObject {
         setupCompleted = true
         showWizard = false
         UserDefaults.standard.removeObject(forKey: PrefKey.wizardStep)
-        AppWindows.closeMain()
-        sayReady()
+        if stayInMenuBar {
+            AppWindows.closeMain()
+            sayReady()
+        } else {
+            speakShort("Done")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { NSApp.terminate(nil) }
+        }
+    }
+
+    // MARK: Which channel is reading right now
+
+    /// Plain-language description of who is speaking subtitles at the moment.
+    var channelDescription: String {
+        if checker.pageReadingEnabled == false { return "Muted. Subtitles are not read anywhere." }
+        if reader.isRunning { return "The app speaks through VoiceOver, in any application." }
+        return "Safari reads the subtitles while it is the front application."
+    }
+
+    func mutePage() { sendPageCommand("mute", label: "mute") }
+    func unmutePage() { sendPageCommand("unmute", label: "unmute") }
+
+    /// Mutes when the page is currently reading, otherwise unmutes (toggle when unknown).
+    func toggleMutePage() {
+        switch checker.pageReadingEnabled {
+        case .some(true): mutePage()
+        case .some(false): unmutePage()
+        case .none: sendPageCommand("toggle", label: "the mute command")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { self.checker.probeScript() }
     }
 
     /// One word through VoiceOver (falls back to an accessibility announcement).

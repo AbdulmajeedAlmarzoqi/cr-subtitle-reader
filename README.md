@@ -32,20 +32,30 @@ It comes as a native macOS app that guides you through the setup step by step, i
    2. Safari access: choose **Allow** when macOS asks whether the app may control Safari, and in Safari turn on Settings > Advanced > "Show features for web developers", then Developer > **Allow JavaScript from Apple Events**.
    3. VoiceOver access: choose **Allow** when macOS asks, and in **VoiceOver Utility > General** turn on **Allow VoiceOver to be controlled with AppleScript**. VoiceOver confirms as soon as it works.
    4. The app places the script in the Userscripts folder and opens crunchyroll.com. In Safari Settings > Extensions turn on Userscripts and allow it for crunchyroll.com; the page reports "Running" the moment the script responds.
-   5. Choose whether to launch at login and check for updates automatically, then press **Finish**. The window closes and the app keeps working from the menu bar.
+   5. Decide whether the app should keep running in the menu bar (needed for speaking in the background), launch at login and check for updates by itself, then press **Finish**.
 4. Open any episode on Crunchyroll in Safari. You will hear "Subtitles loaded: …" and then every line as it appears.
 
-Later launches open no window: VoiceOver simply says "Ready" and the app waits in the menu bar. Click the menu bar icon or the Dock icon to open the status window; closing (Command+W) or minimizing it keeps the app running, Command+Q quits it.
+With the menu bar option on, later launches open no window: VoiceOver says "Ready" and the app waits in the menu bar. Click the menu bar icon or the Dock icon to open the status window; closing (Command+W) or minimizing it keeps the app running, Command+Q quits it. With the option off, the app opens its status window and quits when you close it.
 
 ## Using it
 
+Two things can read the subtitles, and the app always tells you which one is active (the "Now:" line at the top of its menu, and the "Who is reading right now" section in its window):
+
+- **Safari itself.** The script writes each line into a hidden live region and VoiceOver reads it like any other page change. Nothing else is needed, but it only works while Safari is the front application.
+- **The app, in the background.** Turn on "Speak in Background" and the app reads through VoiceOver's own voice and braille wherever you are. This needs the Safari and VoiceOver access from the setup.
+
+"Mute Subtitles" is the real off switch: it silences the script inside the page, so neither channel reads anything until you unmute.
+
 | Where | Action | Result |
 |---|---|---|
-| Crunchyroll page | Option+Shift+S | Turn subtitle reading on or off |
+| Crunchyroll page | Option+Shift+S | Mute or unmute subtitles |
 | Crunchyroll page | Option+Shift+L | Switch to the next available subtitle language |
 | Crunchyroll page | Option+Shift+R | Repeat the current line |
-| App or menu bar | Start Background Reading | Speak through VoiceOver even when Safari is not in front |
-| App or menu bar | Check for Updates… | Fetch the latest release, show its notes and install it |
+| Menu bar or Actions menu | Mute Subtitles / Unmute Subtitles | Same as Option+Shift+S (Command+Shift+M in the app) |
+| Menu bar or Actions menu | Speak in Background | Read through VoiceOver even when Safari is not in front (Command+Shift+B in the app) |
+| Menu bar or app menu | Check for Updates… | Fetch the latest release, show its notes and install it |
+
+If you only listen inside Safari and do not want a menu bar icon, turn off "Keep running in the menu bar" at the end of the setup or in Settings. The app then quits when you close its window and behaves as a plain setup and status tool.
 
 ### Automation with `crsr://` links
 
@@ -54,7 +64,8 @@ The app registers the `crsr` URL scheme, so any tool that can open a link can dr
 | Link | Action |
 |---|---|
 | `crsr://reader/start`, `crsr://reader/stop`, `crsr://reader/toggle` | Background reading through VoiceOver |
-| `crsr://page/toggle`, `crsr://page/language`, `crsr://page/repeat` | Send a command to the script in the Crunchyroll tab |
+| `crsr://page/mute`, `crsr://page/unmute`, `crsr://page/toggle` | Silence or resume the script in the Crunchyroll tab |
+| `crsr://page/language`, `crsr://page/repeat` | Next subtitle language, repeat the current line |
 | `crsr://update/check` | Check for updates |
 | `crsr://setup`, `crsr://show` | Open the setup assistant or the main window |
 
@@ -68,7 +79,7 @@ The `applescript` folder also contains standalone scripts (toggle, next language
 2. Every 150 ms it reads the `<video>` element's current time and picks the active line, skipping signs and on-screen text.
 3. The line passes through the de-duplication logic ported from the NVDA add-on (`processSubtitle` / `filterSamePart`) so partial repeats and overlapping lines are not read twice.
 4. The result is written to a visually hidden `aria-live="assertive"` region inside the player, which VoiceOver announces.
-5. When the app's background reader is running, it sends a heartbeat through `localStorage`; the script then stops using the live region and the app speaks the text with VoiceOver's `output` command through the embedded AppleScript bridge. Stopping the app hands control back immediately.
+5. VoiceOver only announces live regions of the front application, so reading stops the moment you switch away from Safari. While "Speak in Background" is on, the app sends a heartbeat through `localStorage`; the script then stops using the live region and the app speaks the text with VoiceOver's `output` command through the embedded AppleScript bridge, wherever you are. Turning it off hands control back to the live region immediately.
 
 The script never sends data anywhere, never touches your credentials and does not change playback.
 

@@ -25,31 +25,42 @@ struct DashboardView: View {
                 }
             }
 
-            Section("Background reading through VoiceOver") {
-                Toggle("Read subtitles through VoiceOver, even while you are in other apps", isOn: Binding(
+            Section("Who is reading right now") {
+                Text(state.channelDescription)
+                    .accessibilityLabel("Now: \(state.channelDescription)")
+                HStack {
+                    Button(state.checker.pageReadingEnabled == false ? "Unmute Subtitles" : "Mute Subtitles") { state.toggleMutePage() }
+                    Button("Next Subtitle Language") { state.sendPageCommand("language", label: "the language command") }
+                    Button("Repeat Current Line") { state.sendPageCommand("repeat", label: "the repeat command") }
+                }
+                Text("Muting silences the script inside Safari; it applies to both channels below.")
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Speak in background") {
+                Toggle("Speak subtitles through VoiceOver while you are in other applications", isOn: Binding(
                     get: { state.reader.isRunning },
                     set: { $0 ? state.reader.start() : state.reader.stop() }
                 ))
                 Text(state.reader.status.description)
                     .foregroundStyle(.secondary)
-                    .accessibilityLabel("Reader status: \(state.reader.status.description)")
+                    .accessibilityLabel("Background status: \(state.reader.status.description)")
                 if !state.reader.lastSpoken.isEmpty {
                     Text("Last line: \(state.reader.lastSpoken)")
                 }
+                Text("Off means Safari's own live region does the reading, which works only while Safari is the front application. On means the app reads through VoiceOver everywhere; it needs the Safari and VoiceOver access from the setup.")
+                    .foregroundStyle(.secondary)
             }
 
-            Section("Actions") {
-                HStack {
-                    Button("Toggle Subtitle Reading") { state.sendPageCommand("toggle", label: "the toggle command") }
-                    Button("Next Subtitle Language") { state.sendPageCommand("language", label: "the language command") }
-                    Button("Repeat Current Line") { state.sendPageCommand("repeat", label: "the repeat command") }
-                }
+            Section("More") {
                 HStack {
                     Button("Open Crunchyroll in Safari") { state.checker.openInSafari(AppInfo.crunchyrollURL) }
                     Button("Automation Settings") { state.checker.openAutomationSettings() }
                     Button("Run Setup Assistant Again") { state.rerunSetup() }
                 }
-                Text("Inside the page: Option+Shift+S toggles reading, Option+Shift+L switches language, Option+Shift+R repeats the line. Closing this window keeps the app running in the menu bar.")
+                Text("Inside the page: Option+Shift+S mutes or unmutes, Option+Shift+L switches language, Option+Shift+R repeats the line.")
+                    .foregroundStyle(.secondary)
+                Text(state.stayInMenuBar ? "Closing this window keeps the app running in the menu bar." : "The app quits when you close this window. Turn on “Keep running in the menu bar” in Settings to change that.")
                     .foregroundStyle(.secondary)
             }
 

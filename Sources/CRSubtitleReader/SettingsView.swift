@@ -10,11 +10,14 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("General") {
+                Toggle("Keep running in the menu bar (needed for speaking in the background)", isOn: $state.stayInMenuBar)
                 Toggle("Launch at login", isOn: Binding(
                     get: { state.launchAtLogin },
                     set: { state.setLaunchAtLogin($0) }
                 ))
-                Toggle("Start background reading through VoiceOver when the app launches", isOn: $startReadingOnLaunch)
+                .disabled(!state.stayInMenuBar)
+                Toggle("Start speaking in the background as soon as the app launches", isOn: $startReadingOnLaunch)
+                    .disabled(!state.stayInMenuBar)
                 Toggle("Use the system voice when VoiceOver cannot be controlled", isOn: $systemVoiceFallback)
             }
             Section("Updates") {
