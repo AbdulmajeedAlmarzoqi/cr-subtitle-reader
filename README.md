@@ -26,8 +26,8 @@ It comes as a native macOS app that guides you through the setup step by step, i
 ## Install
 
 1. Download `CR-Subtitle-Reader-<version>.zip` from the [latest release](https://github.com/AbdulmajeedAlmarzoqi/cr-subtitle-reader/releases/latest) and unzip it.
-2. Move **CR Subtitle Reader.app** to your Applications folder and open it.
-   The app is signed locally, not notarized by Apple, so the first launch is blocked by Gatekeeper. Open **System Settings > Privacy & Security**, scroll to the message about CR Subtitle Reader and choose **Open Anyway** (or Control-click the app in Finder and choose Open). This is needed once.
+2. Move **CR Subtitle Reader.app** to your Applications folder with Finder, then open it from there. Do not open it straight from the unzipped folder: macOS then runs it from a temporary random path ("App Translocation"), forgets its permissions on every launch and blocks updates. If that happens anyway, the app notices and moves itself.
+   The app is signed with the project's own certificate, not notarized by Apple, so the first launch is blocked by Gatekeeper. Open **System Settings > Privacy & Security**, scroll to the message about CR Subtitle Reader and choose **Open Anyway** (or Control-click the app in Finder and choose Open). This is needed once.
 3. Follow the setup assistant. Each step checks itself continuously, so you only follow the instructions and press Continue:
    1. Install the Userscripts extension from the App Store (the page notices when it is installed).
    2. Safari access: choose **Allow** when macOS asks whether the app may control Safari, and in Safari turn on Settings > Advanced > "Show features for web developers", then Developer > **Allow JavaScript from Apple Events**.
@@ -59,6 +59,10 @@ Two things can read the subtitles, and the app always tells you which one is act
 | Menu bar or app menu | Check for Updates… | Fetch the latest release, show its notes and install it |
 
 If you only listen inside Safari and do not want a menu bar icon, turn off "Keep running in the menu bar" at the end of the setup or in Settings. The app then quits when you close its window and behaves as a plain setup and status tool.
+
+### Crunchyroll as a web app in the Dock
+
+Safari's "Add to Dock" turns Crunchyroll into a separate web app. Apple's documentation is clear that a web app shares no settings with Safari and manages its extensions on its own, so Userscripts has to be turned on inside the web app once: open the web app, choose its name in the menu bar, then Settings > Extensions. After that VoiceOver reads the subtitles inside the web app while it is in front, with the same Option+Shift shortcuts. The web app cannot be scripted, so background speech, muting from the app and the status checks work only with Crunchyroll open in Safari itself. The app notices installed Crunchyroll web apps and repeats these instructions in the setup assistant and the status window.
 
 ### If something goes missing later
 
@@ -100,7 +104,9 @@ cd cr-subtitle-reader
 ./scripts/build-app.sh
 ```
 
-The universal app lands in `build/CR Subtitle Reader.app` together with a zip and its SHA-256. Set `CODESIGN_IDENTITY` to sign with a Developer ID. `swift build` alone compiles the executable for development.
+The universal app lands in `build/CR Subtitle Reader.app` together with a zip and its SHA-256.
+
+Signing matters more than usual here: macOS ties the Safari and VoiceOver Automation permissions to the app's code-signing identity, and an ad-hoc signature is a new identity on every build, so users would have to allow the app again after each update. `scripts/make-signing-identity.sh` creates a self-signed "CR Subtitle Reader Developer" certificate once, and `build-app.sh` uses it automatically; releases must be built with that same certificate. Set `CODESIGN_IDENTITY` to use a Developer ID instead. `swift build` alone compiles the executable for development.
 
 `test/index.html` is a small harness that simulates Crunchyroll's playback response, a subtitle file and a video element, so the script's logic can be tested in any browser without an account (`python3 -m http.server 8765`, then open `http://localhost:8765/test/`).
 

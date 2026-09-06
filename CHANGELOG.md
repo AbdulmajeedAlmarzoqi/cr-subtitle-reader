@@ -2,6 +2,12 @@
 
 All notable changes to CR Subtitle Reader are documented here.
 
+## 1.0.5 — 2026-09-06
+
+- Permissions now survive updates. Releases are signed with one stable certificate instead of an ad-hoc signature, so macOS recognises the app as the same one after an update and does not ask for Safari and VoiceOver access again.
+- If the app is launched straight from the downloaded archive, macOS runs it from a temporary random path and forgets its permissions every time. The app now detects this, explains it and moves itself to Applications.
+- Crunchyroll as a web app in the Dock: the app detects it and explains that Userscripts must be turned on inside the web app's own Settings > Extensions, and that background speech and the app's commands need Crunchyroll in Safari.
+
 ## 1.0.4 — 2026-09-06
 
 - Option+Shift+K goes back to the previous subtitle language (Option+Shift+L still goes forward). Also available as "Previous Subtitle Language" in the app's menus and as `crsr://page/language-back`.

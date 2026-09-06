@@ -58,6 +58,8 @@ final class PrerequisiteChecker: ObservableObject {
     @Published private(set) var scriptActivity: ScriptActivity = .unknown
     /// Whether the script in the current Crunchyroll tab is announcing (nil when unknown).
     @Published private(set) var pageReadingEnabled: Bool?
+    /// Crunchyroll web apps created with Safari's "Add to Dock".
+    @Published private(set) var crunchyrollWebApps: [WebAppDetector.WebApp] = []
     /// Whether the script cuts off the previous line (assertive, with VoiceOver's tone).
     @Published private(set) var pageInterruptMode: Bool?
 
@@ -83,6 +85,11 @@ final class PrerequisiteChecker: ObservableObject {
         installedScriptVersion = ScriptInstaller.installedVersion(in: scriptsDirectory)
         bundledScriptVersion = ScriptInstaller.bundledVersion()
         voiceOverRunning = !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.VoiceOver").isEmpty
+        crunchyrollWebApps = WebAppDetector.crunchyrollWebApps()
+    }
+
+    func openWebApp(_ app: WebAppDetector.WebApp) {
+        NSWorkspace.shared.openApplication(at: app.url, configuration: NSWorkspace.OpenConfiguration())
     }
 
     /// Asks Safari to run a trivial script. Safari must be running with a window.

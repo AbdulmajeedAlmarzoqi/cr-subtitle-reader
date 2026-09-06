@@ -259,6 +259,10 @@ struct SetupWizardView: View {
                 Button("Open Crunchyroll") { startActivationWatch() }
                 Button("Choose Script Folder…") { state.chooseScriptsFolder() }
             }
+            if !state.checker.crunchyrollWebApps.isEmpty {
+                Text("You also have Crunchyroll as a web app in the Dock. Web apps keep their own extension settings: open the web app, choose its name in the menu bar > Settings > Extensions, and turn on Userscripts there too. Inside the web app, VoiceOver reads the subtitles while it is in front; background speech and this app's commands need Crunchyroll in Safari.")
+                    .foregroundStyle(.secondary)
+            }
             Text("Folder: \(state.checker.scriptsDirectory.path)")
                 .foregroundStyle(.secondary)
             if !state.installMessage.isEmpty {

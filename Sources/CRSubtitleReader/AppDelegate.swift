@@ -41,6 +41,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             .store(in: &cancellables)
 
+        if Relocator.isTranslocated && !LaunchOptions.skipRelocation {
+            requireMoveToApplications()
+            return
+        }
         if state.setupCompleted {
             if Relocator.shouldOffer && !LaunchOptions.skipRelocation { offerMoveToApplications() }
             // A newer script shipped with this build? Refresh the copy inside the extension quietly.
@@ -230,6 +234,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func rerunSetup() { state.rerunSetup() }
     @objc private func openRepository() { NSWorkspace.shared.open(AppInfo.repositoryURL) }
     @objc private func openIssues() { NSWorkspace.shared.open(AppInfo.issuesURL) }
+
+    /// Gatekeeper is running the app from a temporary random path: permissions would not stick and
+    /// updates could not install, so moving is the only way forward.
+    private func requireMoveToApplications() {
+        Log.error("Running translocated from \(Bundle.main.bundleURL.path)")
+        state.speakShort("CR Subtitle Reader must be moved to the Applications folder before it can work.")
+        let alert = NSAlert()
+        alert.messageText = "Move \(AppInfo.name) to the Applications folder"
+        alert.informativeText = "macOS is running the app from a temporary location because it was opened straight from the downloaded archive. From there, macOS forgets the app's permissions on every launch and updates cannot be installed. Move it to Applications to continue; the app relaunches from there."
+        alert.addButton(withTitle: "Move to Applications")
+        alert.addButton(withTitle: "Quit")
+        if alert.runModal() == .alertFirstButtonReturn {
+            do {
+                try Relocator.moveToApplications()
+            } catch {
+                NSAlert(error: error).runModal()
+                NSApp.terminate(nil)
+            }
+        } else {
+            NSApp.terminate(nil)
+        }
+    }
 
     private func offerMoveToApplications() {
         let alert = NSAlert()

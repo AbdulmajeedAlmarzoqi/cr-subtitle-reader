@@ -11,7 +11,18 @@ VERSION=$(/usr/bin/plutil -extract CFBundleShortVersionString raw Resources/Info
 APP_NAME="CR Subtitle Reader"
 APP="build/$APP_NAME.app"
 ARCHS=${ARCHS:-arm64 x86_64}
-IDENTITY=${CODESIGN_IDENTITY:--}
+# Sign with a stable identity whenever one exists: macOS keys the Safari/VoiceOver Automation
+# permission to the signing identity, and an ad-hoc signature changes with every build, which
+# makes users approve the app again after each update. See scripts/make-signing-identity.sh.
+STABLE_IDENTITY="CR Subtitle Reader Developer"
+if [ -n "${CODESIGN_IDENTITY:-}" ]; then
+	IDENTITY="$CODESIGN_IDENTITY"
+elif security find-identity -v -p codesigning 2>/dev/null | grep -q "\"$STABLE_IDENTITY\""; then
+	IDENTITY="$STABLE_IDENTITY"
+else
+	IDENTITY="-"
+	echo "warning: no signing identity found; signing ad-hoc (permissions will not survive updates). Run scripts/make-signing-identity.sh." >&2
+fi
 mkdir -p build
 
 echo "==> Building $APP_NAME $VERSION for: $ARCHS"
