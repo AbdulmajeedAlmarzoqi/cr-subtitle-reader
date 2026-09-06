@@ -289,6 +289,7 @@ struct SetupWizardView: View {
                 Text("• Option+Shift+S: turn subtitle reading on or off")
                 Text("• Option+Shift+L: switch to the next subtitle language")
                 Text("• Option+Shift+R: repeat the current line")
+                Text("• Option+Shift+I: interrupt mode, where a new line cuts off the previous one (VoiceOver adds a short tone)")
             }
             Toggle("Keep CR Subtitle Reader running in the menu bar after setup", isOn: $state.stayInMenuBar)
             Toggle("Launch CR Subtitle Reader at login", isOn: Binding(

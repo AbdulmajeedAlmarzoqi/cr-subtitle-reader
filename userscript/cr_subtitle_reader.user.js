@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CR Subtitle Reader
 // @namespace    https://github.com/AbdulmajeedAlmarzoqi/cr-subtitle-reader
-// @version      1.0.1
+// @version      1.0.2
 // @description  Reads Crunchyroll subtitles aloud for VoiceOver users on Safari (ARIA live region + AppleScript bridge).
 // @author       Abdulmajeed Almarzoqi
 // @license      GPL-3.0-or-later
@@ -45,6 +45,7 @@
  *   Option+Shift+S  Toggle subtitle reading on/off
  *   Option+Shift+L  Cycle through the available subtitle languages
  *   Option+Shift+R  Repeat the current subtitle line
+ *   Option+Shift+I  Interrupt mode on/off (assertive live region; VoiceOver adds a tone)
  */
 
 (function () {
@@ -52,13 +53,16 @@
 
 	// ===================== Settings =====================
 	var TICK_MS = 150;                  // how often the video time is checked
-	var LIVE_POLITENESS = 'assertive';  // 'assertive' interrupts current speech (like NVDA); 'polite' waits
+	// 'polite' announces without any VoiceOver sound effect. 'assertive' interrupts the line being
+	// spoken (like NVDA) but VoiceOver on macOS plays a short tone before every assertive announcement.
+	// Users can switch at runtime with Option+Shift+I; the choice is stored in localStorage (crsr-interrupt).
+	var LIVE_POLITENESS = 'polite';
 	var BRIDGE_TIMEOUT_MS = 2000;       // without an app heartbeat for this long, fall back to the live region
 	var EMPTY_RESET_MS = 1000;          // silence needed before the same line may be announced again
 	var ANNOUNCE_LOADED = true;         // announce when a subtitle file has been loaded
 	var STATUS_HOLD_MS = 1500;          // after a status message, hold subtitles so the message can be heard
-	var KEYS = { toggle: 'KeyS', language: 'KeyL', repeat: 'KeyR' };
-	var SCRIPT_VERSION = '1.0.1';
+	var KEYS = { toggle: 'KeyS', language: 'KeyL', repeat: 'KeyR', interrupt: 'KeyI' };
+	var SCRIPT_VERSION = '1.0.2';
 
 	var STR = {
 		on: 'Subtitle reading: on',
@@ -67,7 +71,9 @@
 		noLangs: 'Subtitle language list not loaded yet',
 		lang: 'Subtitle language: ',
 		loaded: 'Subtitles loaded: ',
-		loadFailed: 'Could not load the subtitle file'
+		loadFailed: 'Could not load the subtitle file',
+		interruptOn: 'Interrupt mode on: new lines cut off the previous one, with a VoiceOver tone',
+		interruptOff: 'Interrupt mode off: lines are read in turn, without a tone'
 	};
 	var UI_LANG = 'en';
 	function T(key) { return STR[key]; }
@@ -124,6 +130,8 @@
 	function setStore(key, value) { try { localStorage.setItem(key, String(value)); } catch (e) {} }
 
 	function isEnabled() { return getStore('crsr-enabled') !== '0'; }
+	function interruptMode() { return getStore('crsr-interrupt') === '1'; }
+	function livePoliteness() { return interruptMode() ? 'assertive' : LIVE_POLITENESS; }
 	function setEnabled(value) { setStore('crsr-enabled', value ? '1' : '0'); }
 
 	function bridgeActive() {
@@ -163,7 +171,7 @@
 			if (!liveRegion) {
 				liveRegion = document.createElement('div');
 				liveRegion.id = 'crsr-live';
-				liveRegion.setAttribute('aria-live', LIVE_POLITENESS);
+				liveRegion.setAttribute('aria-live', livePoliteness());
 				liveRegion.setAttribute('aria-atomic', 'true');
 				liveRegion.setAttribute('aria-relevant', 'additions text');
 				// Visually hidden but still in the accessibility tree (never display:none)
@@ -183,6 +191,8 @@
 	function speakLive(msg, lang) {
 		var region = ensureLiveRegion();
 		if (!region) return;
+		var politeness = livePoliteness();
+		if (region.getAttribute('aria-live') !== politeness) region.setAttribute('aria-live', politeness);
 		region.setAttribute('lang', lang || UI_LANG);
 		// Clear first, then set the text a moment later so VoiceOver notices the change
 		// even when the text is identical to the previous one (e.g. "repeat").
@@ -320,7 +330,7 @@
 			emptySubtitleTime = 0;
 			var changed = currentLang !== lang;
 			currentLang = lang;
-			setStore('crsr-lang', lang);
+			if (lang !== 'auto') setStore('crsr-lang', lang);
 			if (announceIt) announce(T('lang') + langName(lang), UI_LANG, true);
 			else if (ANNOUNCE_LOADED && changed) announce(T('loaded') + langName(lang), UI_LANG, true);
 		}).catch(function () { announce(T('loadFailed'), UI_LANG, true); });
@@ -604,8 +614,15 @@
 		else announce(T('noSub'), UI_LANG, true);
 	}
 
+	function toggleInterrupt() {
+		var on = !interruptMode();
+		setStore('crsr-interrupt', on ? '1' : '0');
+		announce(on ? T('interruptOn') : T('interruptOff'), UI_LANG, true);
+	}
+
 	function runCommand(cmd) {
 		if (cmd === 'toggle') toggleEnabled();
+		else if (cmd === 'interrupt') toggleInterrupt();
 		else if (cmd === 'mute') setEnabledAndAnnounce(false);
 		else if (cmd === 'unmute') setEnabledAndAnnounce(true);
 		else if (cmd === 'language') cycleLanguage();
@@ -613,7 +630,7 @@
 	}
 
 	// Commands from the app / AppleScript arrive through localStorage as "command<tab>timestamp":
-	// toggle, mute, unmute, language, repeat
+	// toggle, mute, unmute, language, repeat, interrupt
 	function pollExternalCommand(cmdValue) {
 		if (!cmdValue || cmdValue === lastCmdSeen) return false;
 		lastCmdSeen = cmdValue;
@@ -632,6 +649,7 @@
 		if (e.code === KEYS.toggle) toggleEnabled();
 		else if (e.code === KEYS.language) cycleLanguage();
 		else if (e.code === KEYS.repeat) repeatSubtitle();
+		else if (e.code === KEYS.interrupt) toggleInterrupt();
 		else return;
 		e.preventDefault();
 		e.stopPropagation();
@@ -724,6 +742,7 @@
 		get state() {
 			return {
 				version: SCRIPT_VERSION, isTop: isTop, enabled: isEnabled(), bridgeActive: bridgeActive(),
+				interrupt: interruptMode(), politeness: livePoliteness(),
 				currentLang: currentLang, profileLang: profileLang, audioLocale: audioLocale,
 				langs: Object.keys(allSubtitleUrls), cues: subtitleCues.length, lastSubtitle: lastSubtitle,
 				hasVideo: !!getVideo(), videoTime: getVideo() ? getVideo().currentTime : null,

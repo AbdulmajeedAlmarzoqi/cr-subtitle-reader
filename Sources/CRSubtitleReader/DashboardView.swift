@@ -33,6 +33,16 @@ struct DashboardView: View {
                     Button("Next Subtitle Language") { state.sendPageCommand("language", label: "the language command") }
                     Button("Repeat Current Line") { state.sendPageCommand("repeat", label: "the repeat command") }
                 }
+                HStack {
+                    Button(state.checker.pageInterruptMode == true ? "Turn Interrupt Mode Off" : "Turn Interrupt Mode On") {
+                        state.sendPageCommand("interrupt", label: "the interrupt-mode command")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { state.checker.probeScript() }
+                    }
+                    Text(state.checker.pageInterruptMode == true
+                         ? "On: a new line cuts off the previous one; VoiceOver plays a short tone first."
+                         : "Off: lines are read one after another, without any tone.")
+                        .foregroundStyle(.secondary)
+                }
                 Text("Muting silences the script inside Safari; it applies to both channels below.")
                     .foregroundStyle(.secondary)
             }
@@ -58,7 +68,7 @@ struct DashboardView: View {
                     Button("Automation Settings") { state.checker.openAutomationSettings() }
                     Button("Run Setup Assistant Again") { state.rerunSetup() }
                 }
-                Text("Inside the page: Option+Shift+S mutes or unmutes, Option+Shift+L switches language, Option+Shift+R repeats the line.")
+                Text("Inside the page: Option+Shift+S mutes or unmutes, Option+Shift+L switches language, Option+Shift+R repeats the line, Option+Shift+I switches interrupt mode.")
                     .foregroundStyle(.secondary)
                 Text(state.stayInMenuBar ? "Closing this window keeps the app running in the menu bar." : "The app quits when you close this window. Turn on “Keep running in the menu bar” in Settings to change that.")
                     .foregroundStyle(.secondary)

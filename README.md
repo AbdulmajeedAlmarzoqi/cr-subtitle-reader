@@ -11,7 +11,8 @@ It comes as a native macOS app that guides you through the setup step by step, i
 - **Works in Safari with VoiceOver.** Subtitles are announced through an ARIA live region as soon as they appear, in fullscreen too.
 - **Background reading.** Optionally, the app speaks subtitles through VoiceOver's own AppleScript interface (speech and braille) while you are in another app.
 - **Automatic language.** Picks the subtitle language from your Crunchyroll profile, remembers your choice, and lets you switch languages without touching the player's visual menu.
-- **In-page shortcuts.** Option+Shift+S toggles reading, Option+Shift+L switches language, Option+Shift+R repeats the current line.
+- **In-page shortcuts.** Option+Shift+S mutes or unmutes, Option+Shift+L switches language, Option+Shift+R repeats the current line, Option+Shift+I switches interrupt mode.
+- **No tone before each line.** Subtitles are announced through a polite live region, so VoiceOver does not play its alert sound with every line.
 - **Setup assistant.** Installs the free Userscripts extension's script for you and checks Safari and VoiceOver settings.
 - **Menu bar quick actions, launch at login, automatic updates** with release notes and one-click installation.
 - **Free and open source** under the GPL-3.0-or-later.
@@ -51,6 +52,7 @@ Two things can read the subtitles, and the app always tells you which one is act
 | Crunchyroll page | Option+Shift+S | Mute or unmute subtitles |
 | Crunchyroll page | Option+Shift+L | Switch to the next available subtitle language |
 | Crunchyroll page | Option+Shift+R | Repeat the current line |
+| Crunchyroll page | Option+Shift+I | Interrupt mode on or off (see below) |
 | Menu bar or Actions menu | Mute Subtitles / Unmute Subtitles | Same as Option+Shift+S (Command+Shift+M in the app) |
 | Menu bar or Actions menu | Speak in Background | Read through VoiceOver even when Safari is not in front (Command+Shift+B in the app) |
 | Menu bar or app menu | Check for Updates… | Fetch the latest release, show its notes and install it |
@@ -82,7 +84,7 @@ The `applescript` folder also contains standalone scripts (toggle, next language
 1. The userscript runs in the page at document start and wraps `fetch`/`XMLHttpRequest`. When Crunchyroll requests `/playback/…`, the response lists subtitle files (ASS) for every language; the script downloads the selected one and parses it.
 2. Every 150 ms it reads the `<video>` element's current time and picks the active line, skipping signs and on-screen text.
 3. The line passes through the de-duplication logic ported from the NVDA add-on (`processSubtitle` / `filterSamePart`) so partial repeats and overlapping lines are not read twice.
-4. The result is written to a visually hidden `aria-live="assertive"` region inside the player, which VoiceOver announces.
+4. The result is written to a visually hidden `aria-live="polite"` region inside the player, which VoiceOver announces. Polite is deliberate: VoiceOver on macOS plays a short tone before every *assertive* announcement (the same earcon it uses for `role="alert"`), and hearing that tone with every subtitle line gets tiring fast. Polite announcements have no tone; lines are read one after another. If you prefer a new line to cut off the previous one, turn on interrupt mode (Option+Shift+I, or from the app) and accept the tone.
 5. VoiceOver only announces live regions of the front application, so reading stops the moment you switch away from Safari. While "Speak in Background" is on, the app sends a heartbeat through `localStorage`; the script then stops using the live region and the app speaks the text with VoiceOver's `output` command through the embedded AppleScript bridge, wherever you are. Turning it off hands control back to the live region immediately.
 
 The script never sends data anywhere, never touches your credentials and does not change playback.

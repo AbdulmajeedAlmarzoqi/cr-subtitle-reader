@@ -58,6 +58,8 @@ final class PrerequisiteChecker: ObservableObject {
     @Published private(set) var scriptActivity: ScriptActivity = .unknown
     /// Whether the script in the current Crunchyroll tab is announcing (nil when unknown).
     @Published private(set) var pageReadingEnabled: Bool?
+    /// Whether the script cuts off the previous line (assertive, with VoiceOver's tone).
+    @Published private(set) var pageInterruptMode: Bool?
 
     private let bridge: AppleScriptBridge
 
@@ -125,6 +127,7 @@ final class PrerequisiteChecker: ObservableObject {
             if activity != scriptActivity { Log.info("Script activity: \(activity.label)") }
             scriptActivity = activity
             pageReadingEnabled = nil
+            pageInterruptMode = nil
             return
         }
         guard let data = state.data(using: .utf8),
@@ -136,6 +139,7 @@ final class PrerequisiteChecker: ObservableObject {
         let language = json["currentLang"] as? String ?? ""
         let cues = json["cues"] as? Int ?? 0
         pageReadingEnabled = json["enabled"] as? Bool
+        pageInterruptMode = json["interrupt"] as? Bool
         let activity = ScriptActivity.active(version: version, language: language, cues: cues)
         if activity != scriptActivity { Log.info("Script activity: \(activity.label)") }
         scriptActivity = activity
