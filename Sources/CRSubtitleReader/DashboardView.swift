@@ -63,6 +63,22 @@ struct DashboardView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if !state.checker.crunchyrollWebApps.isEmpty {
+                Section("Crunchyroll web app in the Dock") {
+                    Text("You have Crunchyroll as a Safari web app (\(state.checker.crunchyrollWebApps.map(\.name).joined(separator: ", "))). A web app is separate from Safari: it has its own extension settings and cannot be reached by this app.")
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("1. Open the web app, then choose its name in the menu bar > Settings > Extensions and turn on Userscripts.")
+                        Text("2. Inside the web app, VoiceOver reads the subtitles while the web app is in front, with the same Option+Shift shortcuts.")
+                        Text("3. Background speech, muting from this app and the checks above only work with Crunchyroll open in Safari itself.")
+                    }
+                    HStack {
+                        ForEach(state.checker.crunchyrollWebApps, id: \.url) { app in
+                            Button("Open \(app.name) Web App") { state.checker.openWebApp(app) }
+                        }
+                    }
+                }
+            }
+
             Section("More") {
                 HStack {
                     Button("Open Crunchyroll in Safari") { state.checker.openInSafari(AppInfo.crunchyrollURL) }
