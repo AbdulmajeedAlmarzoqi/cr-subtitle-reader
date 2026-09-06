@@ -4,7 +4,8 @@ import AppKit
 /// `crsr://` URLs let VoiceOver Commander, Shortcuts or the Terminal drive the app without UI:
 ///   crsr://reader/start | stop | toggle      background reading through VoiceOver
 ///   crsr://page/mute | unmute | toggle       silence or resume the script in the Crunchyroll tab
-///   crsr://page/language | repeat            next subtitle language / repeat the current line
+///   crsr://page/language | language-back    next / previous subtitle language
+///   crsr://page/repeat                       repeat the current line
 ///   crsr://page/interrupt                    interrupt mode on/off (assertive live region, with VoiceOver's tone)
 ///   crsr://update/check                      check for updates and show the result
 ///   crsr://setup                             open the setup assistant
@@ -24,6 +25,7 @@ enum URLCommands {
         case ["page", "mute"]: state.mutePage()
         case ["page", "unmute"]: state.unmutePage()
         case ["page", "language"]: state.sendPageCommand("language", label: "the language command")
+        case ["page", "language-back"], ["page", "language", "back"]: state.sendPageCommand("language-back", label: "the previous-language command")
         case ["page", "interrupt"]: state.sendPageCommand("interrupt", label: "the interrupt-mode command")
         case ["page", "repeat"]: state.sendPageCommand("repeat", label: "the repeat command")
         case ["update", "check"]: Task { await state.updates.check(userInitiated: true) }

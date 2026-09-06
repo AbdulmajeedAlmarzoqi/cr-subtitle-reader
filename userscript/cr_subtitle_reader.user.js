@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         CR Subtitle Reader
 // @namespace    https://github.com/AbdulmajeedAlmarzoqi/cr-subtitle-reader
-// @version      1.0.2
+// @version      1.0.3
 // @description  Reads Crunchyroll subtitles aloud for VoiceOver users on Safari (ARIA live region + AppleScript bridge).
 // @author       Abdulmajeed Almarzoqi
 // @license      GPL-3.0-or-later
@@ -43,7 +43,8 @@
  *
  * Keyboard shortcuts inside the page (Option+Shift + key)
  *   Option+Shift+S  Toggle subtitle reading on/off
- *   Option+Shift+L  Cycle through the available subtitle languages
+ *   Option+Shift+L  Next subtitle language
+ *   Option+Shift+K  Previous subtitle language
  *   Option+Shift+R  Repeat the current subtitle line
  *   Option+Shift+I  Interrupt mode on/off (assertive live region; VoiceOver adds a tone)
  */
@@ -61,8 +62,8 @@
 	var EMPTY_RESET_MS = 1000;          // silence needed before the same line may be announced again
 	var ANNOUNCE_LOADED = true;         // announce when a subtitle file has been loaded
 	var STATUS_HOLD_MS = 1500;          // after a status message, hold subtitles so the message can be heard
-	var KEYS = { toggle: 'KeyS', language: 'KeyL', repeat: 'KeyR', interrupt: 'KeyI' };
-	var SCRIPT_VERSION = '1.0.2';
+	var KEYS = { toggle: 'KeyS', language: 'KeyL', languageBack: 'KeyK', repeat: 'KeyR', interrupt: 'KeyI' };
+	var SCRIPT_VERSION = '1.0.3';
 
 	var STR = {
 		on: 'Subtitle reading: on',
@@ -602,10 +603,10 @@
 		broadcastSettings(true);
 	}
 
-	function cycleLanguage() {
+	function cycleLanguage(step) {
 		var langs = Object.keys(allSubtitleUrls).filter(function (k) { return k !== 'auto'; });
 		if (!langs.length) { announce(T('noLangs'), UI_LANG, true); return; }
-		var idx = (langs.indexOf(currentLang) + 1) % langs.length;
+		var idx = (langs.indexOf(currentLang) + (step || 1) + langs.length) % langs.length;
 		loadSubtitle(langs[idx], true);
 	}
 
@@ -625,12 +626,13 @@
 		else if (cmd === 'interrupt') toggleInterrupt();
 		else if (cmd === 'mute') setEnabledAndAnnounce(false);
 		else if (cmd === 'unmute') setEnabledAndAnnounce(true);
-		else if (cmd === 'language') cycleLanguage();
+		else if (cmd === 'language') cycleLanguage(1);
+		else if (cmd === 'language-back') cycleLanguage(-1);
 		else if (cmd === 'repeat') repeatSubtitle();
 	}
 
 	// Commands from the app / AppleScript arrive through localStorage as "command<tab>timestamp":
-	// toggle, mute, unmute, language, repeat, interrupt
+	// toggle, mute, unmute, language, language-back, repeat, interrupt
 	function pollExternalCommand(cmdValue) {
 		if (!cmdValue || cmdValue === lastCmdSeen) return false;
 		lastCmdSeen = cmdValue;
@@ -647,7 +649,8 @@
 		var t = e.target;
 		if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
 		if (e.code === KEYS.toggle) toggleEnabled();
-		else if (e.code === KEYS.language) cycleLanguage();
+		else if (e.code === KEYS.language) cycleLanguage(1);
+		else if (e.code === KEYS.languageBack) cycleLanguage(-1);
 		else if (e.code === KEYS.repeat) repeatSubtitle();
 		else if (e.code === KEYS.interrupt) toggleInterrupt();
 		else return;

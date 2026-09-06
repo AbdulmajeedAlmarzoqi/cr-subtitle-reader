@@ -30,7 +30,8 @@ struct DashboardView: View {
                     .accessibilityLabel("Now: \(state.channelDescription)")
                 HStack {
                     Button(state.checker.pageReadingEnabled == false ? "Unmute Subtitles" : "Mute Subtitles") { state.toggleMutePage() }
-                    Button("Next Subtitle Language") { state.sendPageCommand("language", label: "the language command") }
+                    Button("Next Language") { state.sendPageCommand("language", label: "the language command") }
+                    Button("Previous Language") { state.sendPageCommand("language-back", label: "the previous-language command") }
                     Button("Repeat Current Line") { state.sendPageCommand("repeat", label: "the repeat command") }
                 }
                 HStack {
@@ -68,7 +69,7 @@ struct DashboardView: View {
                     Button("Automation Settings") { state.checker.openAutomationSettings() }
                     Button("Run Setup Assistant Again") { state.rerunSetup() }
                 }
-                Text("Inside the page: Option+Shift+S mutes or unmutes, Option+Shift+L switches language, Option+Shift+R repeats the line, Option+Shift+I switches interrupt mode.")
+                Text("Inside the page: Option+Shift+S mutes or unmutes, Option+Shift+L and Option+Shift+K move to the next or previous language, Option+Shift+R repeats the line, Option+Shift+I switches interrupt mode.")
                     .foregroundStyle(.secondary)
                 Text(state.stayInMenuBar ? "Closing this window keeps the app running in the menu bar." : "The app quits when you close this window. Turn on “Keep running in the menu bar” in Settings to change that.")
                     .foregroundStyle(.secondary)

@@ -45,12 +45,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if Relocator.shouldOffer && !LaunchOptions.skipRelocation { offerMoveToApplications() }
             // A newer script shipped with this build? Refresh the copy inside the extension quietly.
             state.checker.refreshLocal()
-            if state.checker.scriptInstalled && !state.checker.scriptUpToDate { state.installScript(quiet: true) }
+            var scriptRefreshed = false
+            if state.checker.scriptInstalled && !state.checker.scriptUpToDate {
+                scriptRefreshed = state.installScript(quiet: true)
+            }
             if state.handleIssueIfAny() {
                 // Something went missing since the setup: the assistant is open at the right step.
             } else if state.stayInMenuBar {
                 // Later launches: no window, one word from VoiceOver, then wait in the menu bar.
                 state.sayReady()
+                if scriptRefreshed { state.noteScriptRefreshed() }
                 if UserDefaults.standard.bool(forKey: PrefKey.startReadingOnLaunch) {
                     state.reader.start(announce: false)
                 }
@@ -134,6 +138,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         actionsBackgroundItem?.keyEquivalentModifierMask = [.command, .shift]
         actionsMenu.addItem(.separator())
         actionsMenu.addItem(withTitle: "Next Subtitle Language", action: #selector(pageLanguage), keyEquivalent: "")
+        actionsMenu.addItem(withTitle: "Previous Subtitle Language", action: #selector(pageLanguageBack), keyEquivalent: "")
         actionsMenu.addItem(withTitle: "Repeat Current Line", action: #selector(pageRepeat), keyEquivalent: "")
         actionsMenu.addItem(withTitle: "Interrupt Mode On or Off", action: #selector(pageInterrupt), keyEquivalent: "")
         actionsMenu.addItem(.separator())
@@ -176,6 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         backgroundMenuItem = menu.addItem(withTitle: "Speak in Background", action: #selector(toggleReading), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Next Subtitle Language", action: #selector(pageLanguage), keyEquivalent: "")
+        menu.addItem(withTitle: "Previous Subtitle Language", action: #selector(pageLanguageBack), keyEquivalent: "")
         menu.addItem(withTitle: "Repeat Current Line", action: #selector(pageRepeat), keyEquivalent: "")
         menu.addItem(withTitle: "Interrupt Mode On or Off", action: #selector(pageInterrupt), keyEquivalent: "")
         menu.addItem(.separator())
@@ -217,6 +223,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleReading() { state.reader.toggle() }
     @objc private func pageToggle() { state.toggleMutePage() }
     @objc private func pageLanguage() { state.sendPageCommand("language", label: "the language command") }
+    @objc private func pageLanguageBack() { state.sendPageCommand("language-back", label: "the previous-language command") }
     @objc private func pageRepeat() { state.sendPageCommand("repeat", label: "the repeat command") }
     @objc private func pageInterrupt() { state.sendPageCommand("interrupt", label: "the interrupt-mode command") }
     @objc private func openCrunchyroll() { state.checker.openInSafari(AppInfo.crunchyrollURL) }

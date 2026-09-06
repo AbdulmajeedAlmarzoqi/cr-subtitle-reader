@@ -233,6 +233,16 @@ final class AppState: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { self.checker.probeScript() }
     }
 
+    /// After the bundled script replaced an older copy: an open Crunchyroll page still runs the old one.
+    func noteScriptRefreshed() {
+        let onCrunchyroll = !((try? bridge.readBridge()) ?? "").isEmpty
+        if onCrunchyroll {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                self.speakShort("Subtitle script updated. Reload the Crunchyroll page to use it.")
+            }
+        }
+    }
+
     /// One word through VoiceOver (falls back to an accessibility announcement).
     func sayReady() {
         speakShort("Ready")

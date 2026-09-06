@@ -11,7 +11,7 @@ It comes as a native macOS app that guides you through the setup step by step, i
 - **Works in Safari with VoiceOver.** Subtitles are announced through an ARIA live region as soon as they appear, in fullscreen too.
 - **Background reading.** Optionally, the app speaks subtitles through VoiceOver's own AppleScript interface (speech and braille) while you are in another app.
 - **Automatic language.** Picks the subtitle language from your Crunchyroll profile, remembers your choice, and lets you switch languages without touching the player's visual menu.
-- **In-page shortcuts.** Option+Shift+S mutes or unmutes, Option+Shift+L switches language, Option+Shift+R repeats the current line, Option+Shift+I switches interrupt mode.
+- **In-page shortcuts.** Option+Shift+S mutes or unmutes, Option+Shift+L and Option+Shift+K move to the next or previous language, Option+Shift+R repeats the current line, Option+Shift+I switches interrupt mode.
 - **No tone before each line.** Subtitles are announced through a polite live region, so VoiceOver does not play its alert sound with every line.
 - **Setup assistant.** Installs the free Userscripts extension's script for you and checks Safari and VoiceOver settings.
 - **Menu bar quick actions, launch at login, automatic updates** with release notes and one-click installation.
@@ -50,7 +50,8 @@ Two things can read the subtitles, and the app always tells you which one is act
 | Where | Action | Result |
 |---|---|---|
 | Crunchyroll page | Option+Shift+S | Mute or unmute subtitles |
-| Crunchyroll page | Option+Shift+L | Switch to the next available subtitle language |
+| Crunchyroll page | Option+Shift+L | Next available subtitle language |
+| Crunchyroll page | Option+Shift+K | Previous subtitle language |
 | Crunchyroll page | Option+Shift+R | Repeat the current line |
 | Crunchyroll page | Option+Shift+I | Interrupt mode on or off (see below) |
 | Menu bar or Actions menu | Mute Subtitles / Unmute Subtitles | Same as Option+Shift+S (Command+Shift+M in the app) |
@@ -71,7 +72,7 @@ The app registers the `crsr` URL scheme, so any tool that can open a link can dr
 |---|---|
 | `crsr://reader/start`, `crsr://reader/stop`, `crsr://reader/toggle` | Background reading through VoiceOver |
 | `crsr://page/mute`, `crsr://page/unmute`, `crsr://page/toggle` | Silence or resume the script in the Crunchyroll tab |
-| `crsr://page/language`, `crsr://page/repeat` | Next subtitle language, repeat the current line |
+| `crsr://page/language`, `crsr://page/language-back`, `crsr://page/repeat` | Next or previous subtitle language, repeat the current line |
 | `crsr://update/check` | Check for updates |
 | `crsr://setup`, `crsr://show` | Open the setup assistant or the main window |
 
