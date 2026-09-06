@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct SettingsView: View {
     @EnvironmentObject private var state: AppState
@@ -24,6 +25,10 @@ struct SettingsView: View {
                         Text("Last checked \(last.shortDescription)").foregroundStyle(.secondary)
                     }
                 }
+            }
+            Section("Diagnostics") {
+                Button("Reveal Log File") { NSWorkspace.shared.activateFileViewerSelecting([Log.fileURL]) }
+                Text(Log.fileURL.path).foregroundStyle(.secondary)
             }
             Section("Script folder") {
                 Text(state.checker.scriptsDirectory.path)

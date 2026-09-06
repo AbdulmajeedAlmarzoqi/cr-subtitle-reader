@@ -195,8 +195,9 @@ struct SetupWizardView: View {
                     state.checker.probeSafari()
                     Accessibility.announce("Safari setting: \(state.checker.safariJavaScript.label)")
                 }
+                Button("Open Automation Settings") { state.checker.openAutomationSettings() }
             }
-            Text("Safari must be open with at least one window for the check to work.")
+            Text("Safari must be open with at least one window for the check to work. The first check makes macOS ask whether CR Subtitle Reader may control Safari; choose Allow. If you declined earlier, enable it under System Settings > Privacy & Security > Automation.")
                 .foregroundStyle(.secondary)
         }
     }
@@ -212,8 +213,9 @@ struct SetupWizardView: View {
             HStack {
                 Button("Open VoiceOver Utility") { state.checker.openVoiceOverUtility() }
                 Button("Test Now") { state.checker.probeVoiceOver() }
+                Button("Open Automation Settings") { state.checker.openAutomationSettings() }
             }
-            Text("The test speaks a short sentence through VoiceOver when it succeeds.")
+            Text("The test speaks a short sentence through VoiceOver when it succeeds. The first test makes macOS ask whether CR Subtitle Reader may control VoiceOver; choose Allow.")
                 .foregroundStyle(.secondary)
         }
     }

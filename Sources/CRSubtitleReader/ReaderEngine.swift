@@ -12,6 +12,7 @@ final class ReaderEngine: ObservableObject {
         case javaScriptBlocked
         case scriptMissing
         case voiceOverUnavailable
+        case notAuthorized
 
         var description: String {
             switch self {
@@ -21,6 +22,7 @@ final class ReaderEngine: ObservableObject {
             case .javaScriptBlocked: return "Safari is blocking JavaScript from Apple Events. Enable it in Safari Settings, Developer tab."
             case .scriptMissing: return "The userscript is not running on this page. Check the Userscripts extension for crunchyroll.com."
             case .voiceOverUnavailable: return "VoiceOver cannot be controlled with AppleScript. Using the system voice instead."
+            case .notAuthorized: return "macOS has not allowed CR Subtitle Reader to control Safari. Open System Settings > Privacy & Security > Automation and enable Safari and VoiceOver for CR Subtitle Reader."
             }
         }
     }
@@ -57,6 +59,7 @@ final class ReaderEngine: ObservableObject {
         lastSeq = ""
         voiceOverWarned = false
         status = .waitingForCrunchyroll
+        Log.info("Reader started")
         if announce {
             speak("CR Subtitle Reader started. Open an episode in Safari and I will read its subtitles.")
         }
@@ -94,8 +97,12 @@ final class ReaderEngine: ObservableObject {
         do {
             payload = try bridge.readBridge()
         } catch let error as AppleScriptError {
+            Log.error("readBridge failed: \(error.code) \(error.message)")
             if error.code == 8 || error.message.contains("Apple Events") {
                 warnJavaScriptBlocked()
+                schedule(after: 5)
+            } else if error.code == -1743 {
+                warnNotAuthorized()
                 schedule(after: 5)
             } else {
                 schedule(after: 2)
@@ -149,10 +156,11 @@ final class ReaderEngine: ObservableObject {
     /// Speaks through VoiceOver, falling back to the system voice when allowed.
     func speak(_ text: String) {
         let result = (try? bridge.speakVoiceOver(text)) ?? "error"
+        Log.info("speak via VoiceOver -> \(result): \(text.prefix(60))")
         if result == "ok" { return }
-        if result == "disabled" && !voiceOverWarned {
+        if (result == "disabled" || result == "not-authorized") && !voiceOverWarned {
             voiceOverWarned = true
-            status = .voiceOverUnavailable
+            status = result == "not-authorized" ? .notAuthorized : .voiceOverUnavailable
         }
         if systemVoiceFallback {
             try? bridge.speakSystem(text)
@@ -164,6 +172,14 @@ final class ReaderEngine: ObservableObject {
         if let last = lastJSWarning, Date().timeIntervalSince(last) < warningCooldown { return }
         lastJSWarning = Date()
         speak("Safari is blocking JavaScript from Apple Events. Enable it in Safari Settings, Developer tab.")
+    }
+
+    private var lastAuthWarning: Date?
+    private func warnNotAuthorized() {
+        status = .notAuthorized
+        if let last = lastAuthWarning, Date().timeIntervalSince(last) < warningCooldown { return }
+        lastAuthWarning = Date()
+        speak("macOS has not allowed CR Subtitle Reader to control Safari. Open System Settings, Privacy and Security, Automation, and enable Safari and VoiceOver for CR Subtitle Reader.")
     }
 
     private func warnScriptMissing() {

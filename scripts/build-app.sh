@@ -46,10 +46,11 @@ cp userscript/cr_subtitle_reader.user.js "$APP/Contents/Resources/"
 cp applescript/CRSubtitleReaderBridge.applescript "$APP/Contents/Resources/"
 
 echo "==> Signing ($IDENTITY)"
-if ! codesign --force --deep --sign "$IDENTITY" --options runtime "$APP" 2>/dev/null; then
-	codesign --force --deep --sign "$IDENTITY" "$APP"
-fi
+# The apple-events entitlement is mandatory under the Hardened Runtime; without it macOS silently
+# refuses every Apple Event the app sends to Safari and VoiceOver (error -1743, no permission prompt).
+codesign --force --deep --sign "$IDENTITY" --options runtime --entitlements Resources/CRSubtitleReader.entitlements "$APP"
 codesign --verify --verbose=1 "$APP"
+codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "com.apple.security.automation.apple-events" && echo "entitlement: apple-events OK"
 
 ZIP="build/CR-Subtitle-Reader-$VERSION.zip"
 rm -f "$ZIP" "$ZIP.sha256"

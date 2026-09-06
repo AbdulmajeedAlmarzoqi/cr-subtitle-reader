@@ -29,6 +29,7 @@ final class AppleScriptBridge {
     private func load() {
         guard let source = Self.bridgeSource else {
             loadError = "The AppleScript bridge is missing from the app bundle."
+            Log.error(loadError ?? "")
             return
         }
         guard let compiled = NSAppleScript(source: source) else {
@@ -38,10 +39,12 @@ final class AppleScriptBridge {
         var error: NSDictionary?
         if !compiled.compileAndReturnError(&error) {
             loadError = "The AppleScript bridge failed to compile: \(Self.describe(error))"
+            Log.error(loadError ?? "")
             return
         }
         script = compiled
         loadError = nil
+        Log.info("AppleScript bridge compiled")
     }
 
     private static func fourCharCode(_ string: String) -> UInt32 {
@@ -80,6 +83,7 @@ final class AppleScriptBridge {
         if let error = error {
             let message = error[NSAppleScript.errorMessage] as? String ?? "unknown error"
             let number = error[NSAppleScript.errorNumber] as? Int ?? 0
+            Log.error("AppleScript handler \(handler) failed: \(number) \(message)")
             throw AppleScriptError(code: number, message: message)
         }
         return result.stringValue ?? ""

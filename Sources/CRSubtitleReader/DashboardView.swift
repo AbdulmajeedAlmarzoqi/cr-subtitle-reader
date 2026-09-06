@@ -64,6 +64,7 @@ struct DashboardView: View {
                 HStack {
                     Button("Open Crunchyroll in Safari") { state.checker.openInSafari(AppInfo.crunchyrollURL) }
                     Button("Show Script Folder") { ScriptInstaller.revealInFinder(state.checker.scriptsDirectory) }
+                    Button("Automation Settings") { state.checker.openAutomationSettings() }
                 }
                 Text("Inside the page you can also press Option+Shift+S (toggle), Option+Shift+L (language) and Option+Shift+R (repeat).")
                     .foregroundStyle(.secondary)

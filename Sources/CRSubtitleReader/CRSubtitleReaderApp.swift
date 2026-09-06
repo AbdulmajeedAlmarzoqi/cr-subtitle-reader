@@ -11,8 +11,12 @@ struct CRSubtitleReaderApp: App {
             ContentView()
                 .environmentObject(state)
                 .frame(minWidth: 640, minHeight: 520)
+                // Route crsr:// links to the existing window instead of opening a new one.
+                .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
+                .onOpenURL { url in URLCommands.handle(url, state: state) }
         }
         .windowResizability(.contentMinSize)
+        .handlesExternalEvents(matching: ["*"])
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About \(AppInfo.name)") { AppWindows.openAbout() }
@@ -94,6 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let state = AppState.shared
+        Log.info("Launched \(AppInfo.name) \(AppInfo.version) from \(Bundle.main.bundleURL.path); bridge loaded: \(state.bridge.isLoaded)")
 
         // Show the update window whenever the manager asks for it.
         updateObserver = state.updates.$showUpdateWindow.sink { show in
@@ -116,6 +121,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        Log.info("AppDelegate received \(urls.count) URL(s)")
         for url in urls {
             URLCommands.handle(url, state: AppState.shared)
         }

@@ -11,6 +11,7 @@ import AppKit
 @MainActor
 enum URLCommands {
     static func handle(_ url: URL, state: AppState) {
+        Log.info("URL command received: \(url.absoluteString)")
         guard url.scheme?.lowercased() == "crsr" else { return }
         let parts = ([url.host ?? ""] + url.pathComponents.filter { $0 != "/" }).map { $0.lowercased() }
         switch parts {

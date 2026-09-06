@@ -8,6 +8,7 @@ enum ProbeResult: Equatable {
     case disabled
     case notRunning
     case noWindow
+    case notAuthorized
     case error(String)
 
     var label: String {
@@ -17,6 +18,7 @@ enum ProbeResult: Equatable {
         case .disabled: return "Disabled"
         case .notRunning: return "Not running"
         case .noWindow: return "No Safari window is open"
+        case .notAuthorized: return "CR Subtitle Reader is not allowed to control it. Allow it in System Settings > Privacy & Security > Automation"
         case .error(let message): return "Error: \(message)"
         }
     }
@@ -37,7 +39,7 @@ enum ScriptActivity: Equatable {
             return "Active (script \(version), \(lang), \(cues) lines loaded)"
         case .notActive: return "Not running on the current Crunchyroll page"
         case .noCrunchyrollTab: return "No Crunchyroll tab is active in Safari's front window"
-        case .cannotVerify: return "Cannot verify: Safari is blocking JavaScript from Apple Events"
+        case .cannotVerify: return "Cannot verify: Safari is blocking JavaScript from Apple Events, or CR Subtitle Reader is not allowed to control Safari (System Settings > Privacy & Security > Automation)"
         }
     }
 }
@@ -87,6 +89,7 @@ final class PrerequisiteChecker: ObservableObject {
         case "disabled": safariJavaScript = .disabled
         case "not-running": safariJavaScript = .notRunning
         case "no-window": safariJavaScript = .noWindow
+        case "not-authorized": safariJavaScript = .notAuthorized
         default: safariJavaScript = .error(result)
         }
     }
@@ -99,6 +102,7 @@ final class PrerequisiteChecker: ObservableObject {
         case "enabled": voiceOverControl = .ok
         case "disabled": voiceOverControl = .disabled
         case "not-running": voiceOverControl = .notRunning
+        case "not-authorized": voiceOverControl = .notAuthorized
         default: voiceOverControl = .error(result)
         }
     }
@@ -109,7 +113,7 @@ final class PrerequisiteChecker: ObservableObject {
         if state.isEmpty {
             // Distinguish "no tab" from "blocked" from "not injected".
             let probe = bridge.probeSafariJavaScript()
-            if probe == "disabled" { scriptActivity = .cannotVerify; return }
+            if probe == "disabled" || probe == "not-authorized" { scriptActivity = .cannotVerify; return }
             let payload = (try? bridge.readBridge()) ?? ""
             scriptActivity = payload.isEmpty ? .noCrunchyrollTab : .notActive
             return
@@ -139,6 +143,13 @@ final class PrerequisiteChecker: ObservableObject {
     func openSafari() {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else { return }
         NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    /// System Settings > Privacy & Security > Automation, where Apple Events permissions live.
+    func openAutomationSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     func openVoiceOverUtility() {

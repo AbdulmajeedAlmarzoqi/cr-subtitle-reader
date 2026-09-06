@@ -39,14 +39,16 @@ on readBridge()
 	return jsResult as text
 end readBridge
 
--- Speaks through VoiceOver. Returns "ok", "not-running" or "disabled".
+-- Speaks through VoiceOver. Returns "ok", "not-running", "not-authorized" (macOS Automation
+-- permission missing) or "disabled" (VoiceOver's AppleScript option is off).
 on speakVoiceOver(theText)
 	if theText is "" then return "ok"
 	if not (application "VoiceOver" is running) then return "not-running"
 	try
 		tell application "VoiceOver" to output theText
 		return "ok"
-	on error
+	on error errMsg number errNum
+		if errNum is -1743 then return "not-authorized"
 		return "disabled"
 	end try
 end speakVoiceOver
@@ -85,17 +87,19 @@ on probeSafariJavaScript()
 		return "enabled"
 	on error errMsg number errNum
 		if errNum is 8 or errMsg contains "Apple Events" then return "disabled"
+		if errNum is -1743 then return "not-authorized"
 		return "error:" & errNum & ":" & errMsg
 	end try
 end probeSafariJavaScript
 
--- "enabled", "disabled" or "not-running". Speaks theText when control is available.
+-- "enabled", "disabled", "not-authorized" or "not-running". Speaks theText when control is available.
 on probeVoiceOver(theText)
 	if not (application "VoiceOver" is running) then return "not-running"
 	try
 		tell application "VoiceOver" to output theText
 		return "enabled"
-	on error
+	on error errMsg number errNum
+		if errNum is -1743 then return "not-authorized"
 		return "disabled"
 	end try
 end probeVoiceOver
