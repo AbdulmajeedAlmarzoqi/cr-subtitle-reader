@@ -135,6 +135,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         actionsMenu.addItem(.separator())
         actionsMenu.addItem(withTitle: "Next Subtitle Language", action: #selector(pageLanguage), keyEquivalent: "")
         actionsMenu.addItem(withTitle: "Repeat Current Line", action: #selector(pageRepeat), keyEquivalent: "")
+        actionsMenu.addItem(withTitle: "Interrupt Mode On or Off", action: #selector(pageInterrupt), keyEquivalent: "")
         actionsMenu.addItem(.separator())
         actionsMenu.addItem(withTitle: "Open Crunchyroll in Safari", action: #selector(openCrunchyroll), keyEquivalent: "")
         actionsMenu.addItem(withTitle: "Run Setup Assistant Again", action: #selector(rerunSetup), keyEquivalent: "")
@@ -176,6 +177,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         menu.addItem(withTitle: "Next Subtitle Language", action: #selector(pageLanguage), keyEquivalent: "")
         menu.addItem(withTitle: "Repeat Current Line", action: #selector(pageRepeat), keyEquivalent: "")
+        menu.addItem(withTitle: "Interrupt Mode On or Off", action: #selector(pageInterrupt), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Open Crunchyroll in Safari", action: #selector(openCrunchyroll), keyEquivalent: "")
         menu.addItem(withTitle: "Open \(AppInfo.name)", action: #selector(showMainWindow), keyEquivalent: "")
@@ -216,6 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func pageToggle() { state.toggleMutePage() }
     @objc private func pageLanguage() { state.sendPageCommand("language", label: "the language command") }
     @objc private func pageRepeat() { state.sendPageCommand("repeat", label: "the repeat command") }
+    @objc private func pageInterrupt() { state.sendPageCommand("interrupt", label: "the interrupt-mode command") }
     @objc private func openCrunchyroll() { state.checker.openInSafari(AppInfo.crunchyrollURL) }
     @objc private func rerunSetup() { state.rerunSetup() }
     @objc private func openRepository() { NSWorkspace.shared.open(AppInfo.repositoryURL) }
