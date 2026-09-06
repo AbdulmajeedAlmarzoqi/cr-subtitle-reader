@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 enum WizardStep: Int, CaseIterable {
-    case welcome, userscripts, installScript, enableExtension, safariJavaScript, voiceOverControl, verify, finish
+    case welcome, userscripts, safariAccess, voiceOverAccess, activate, finish
 
     var number: Int { rawValue + 1 }
 
@@ -10,33 +10,30 @@ enum WizardStep: Int, CaseIterable {
         switch self {
         case .welcome: return "Welcome"
         case .userscripts: return "Install the Userscripts extension"
-        case .installScript: return "Install the CR Subtitle Reader script"
-        case .enableExtension: return "Turn on Userscripts in Safari"
-        case .safariJavaScript: return "Allow JavaScript from Apple Events"
-        case .voiceOverControl: return "Allow AppleScript to control VoiceOver"
-        case .verify: return "Verify on Crunchyroll"
+        case .safariAccess: return "Safari access"
+        case .voiceOverAccess: return "VoiceOver access"
+        case .activate: return "Turn on the script in Safari"
         case .finish: return "All set"
-        }
-    }
-
-    var isOptional: Bool {
-        switch self {
-        case .safariJavaScript, .voiceOverControl, .verify: return true
-        default: return false
         }
     }
 }
 
+/// Step-by-step setup. Every step checks its own requirement continuously, so the user only
+/// follows the instructions and presses Continue; there are no "check" buttons.
 struct SetupWizardView: View {
     @EnvironmentObject private var state: AppState
-    @State private var step: WizardStep = .welcome
-    @State private var verifying = false
-    @State private var verifyMessage = ""
-    @State private var autoInstallAttempted = false
+    @AppStorage(PrefKey.wizardStep) private var stepIndex = 0
     @AppStorage(PrefKey.autoCheckUpdates) private var autoCheckUpdates = true
     @AppStorage(PrefKey.startReadingOnLaunch) private var startReadingOnLaunch = false
 
-    private let refreshTimer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+    @State private var lastAnnouncement = ""
+    @State private var openedCrunchyroll = false
+    @State private var lastReload: Date?
+    @State private var voiceOverConfirmed = false
+
+    private let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
+
+    private var step: WizardStep { WizardStep(rawValue: stepIndex) ?? .welcome }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -54,14 +51,11 @@ struct SetupWizardView: View {
             Divider()
 
             HStack {
-                Button("Back") { move(to: -1) }
+                Button("Back") { go(to: stepIndex - 1) }
                     .disabled(step == .welcome)
                 Spacer()
-                if step.isOptional {
-                    Button("Skip") { move(to: 1) }
-                }
                 Button(step == .finish ? "Finish" : "Continue") {
-                    if step == .finish { state.finishSetup() } else { move(to: 1) }
+                    if step == .finish { state.finishSetup() } else { go(to: stepIndex + 1) }
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(!canContinue)
@@ -70,177 +64,225 @@ struct SetupWizardView: View {
         .padding(24)
         .onAppear {
             state.checker.refreshLocal()
+            enter(step)
         }
-        .onReceive(refreshTimer) { _ in
-            if step == .userscripts || step == .installScript { state.checker.refreshLocal() }
-        }
-        .onChange(of: step) { newStep in
-            Accessibility.announce("Step \(newStep.number) of \(WizardStep.allCases.count): \(newStep.title)")
-            if newStep == .installScript && !autoInstallAttempted {
-                autoInstallAttempted = true
-                if state.checker.userscriptsInstalled { state.installScript() }
-            }
-        }
+        .onReceive(timer) { _ in tick() }
     }
 
     private var canContinue: Bool {
         switch step {
         case .userscripts: return state.checker.userscriptsInstalled
-        case .installScript: return state.checker.scriptInstalled
         default: return true
         }
     }
 
-    private func move(to delta: Int) {
-        guard let next = WizardStep(rawValue: step.rawValue + delta) else { return }
-        step = next
+    private func go(to index: Int) {
+        guard let next = WizardStep(rawValue: index) else { return }
+        stepIndex = next.rawValue
+        Accessibility.announce("Step \(next.number) of \(WizardStep.allCases.count): \(next.title)")
+        enter(next)
     }
+
+    /// Work that starts as soon as a step is shown.
+    private func enter(_ step: WizardStep) {
+        lastAnnouncement = ""
+        switch step {
+        case .safariAccess:
+            if !state.checker.safariRunning { state.checker.openSafari() }
+            state.checker.probeSafari()
+        case .voiceOverAccess:
+            voiceOverConfirmed = false
+            state.checker.probeVoiceOver()
+        case .activate:
+            openedCrunchyroll = false
+            lastReload = nil
+            state.checker.refreshLocal()
+            if !state.checker.scriptInstalled || !state.checker.scriptUpToDate { state.installScript() }
+            state.checker.probeSafari()
+            startActivationWatch()
+        default:
+            break
+        }
+        tick()
+    }
+
+    /// Runs every two seconds and keeps the current step's status fresh.
+    private func tick() {
+        switch step {
+        case .userscripts:
+            state.checker.refreshLocal()
+            if state.checker.userscriptsInstalled { announceOnce("Userscripts is installed. Press Continue.") }
+        case .safariAccess:
+            state.checker.probeSafari()
+            if state.checker.safariJavaScript == .ok { announceOnce("Safari access is ready. Press Continue.") }
+        case .voiceOverAccess:
+            state.checker.probeVoiceOver()
+            if state.checker.voiceOverControl == .ok && !voiceOverConfirmed {
+                voiceOverConfirmed = true
+                state.speakShort("VoiceOver access is ready. Press Continue.")
+            }
+        case .activate:
+            state.checker.refreshLocal()
+            if !state.checker.scriptInstalled { state.installScript() }
+            if state.checker.safariJavaScript != .ok { state.checker.probeSafari() }
+            guard state.checker.safariJavaScript == .ok else { return }
+            if !openedCrunchyroll { startActivationWatch(); return }
+            state.checker.probeScript()
+            switch state.checker.scriptActivity {
+            case .active:
+                announceOnce("The script is running on Crunchyroll. Press Continue.")
+            case .noCrunchyrollTab:
+                startActivationWatch()
+            case .notActive:
+                // Safari only injects a newly enabled extension into freshly loaded pages.
+                if let last = lastReload, Date().timeIntervalSince(last) < 12 { return }
+                lastReload = Date()
+                state.checker.reloadCrunchyrollTab()
+            default:
+                break
+            }
+        default:
+            break
+        }
+    }
+
+    private func startActivationWatch() {
+        guard state.checker.safariJavaScript == .ok else { return }
+        state.checker.openInSafari(AppInfo.crunchyrollURL)
+        openedCrunchyroll = true
+        lastReload = Date()
+    }
+
+    private func announceOnce(_ text: String) {
+        guard text != lastAnnouncement else { return }
+        lastAnnouncement = text
+        Accessibility.announce(text)
+    }
+
+    // MARK: Step content
 
     @ViewBuilder
     private var stepContent: some View {
         switch step {
         case .welcome: welcome
         case .userscripts: userscripts
-        case .installScript: installScript
-        case .enableExtension: enableExtension
-        case .safariJavaScript: safariJavaScript
-        case .voiceOverControl: voiceOverControl
-        case .verify: verify
+        case .safariAccess: safariAccess
+        case .voiceOverAccess: voiceOverAccess
+        case .activate: activate
         case .finish: finish
         }
     }
 
-    // MARK: Steps
-
     private var welcome: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("CR Subtitle Reader lets VoiceOver read Crunchyroll subtitles in Safari.")
-            Text("Crunchyroll draws its subtitles as pixels, so screen readers never see them. A small script inside the page fetches the subtitle file, follows the video and announces every line. This assistant installs everything for you in a few steps:")
-            VStack(alignment: .leading, spacing: 4) {
-                Text("1. Install the free Userscripts extension from the App Store.")
-                Text("2. Let this app place the CR Subtitle Reader script into the extension.")
-                Text("3. Turn the extension on in Safari and allow it on crunchyroll.com.")
-                Text("4. Optionally, allow AppleScript access so the app can read in the background.")
-            }
-            Text("Press Continue to begin.")
+            Text("Crunchyroll draws its subtitles as pixels, so screen readers never see them. A small script inside the page fetches the subtitle file, follows the video and announces every line. This assistant sets everything up in a few steps and checks each one for you automatically.")
+            Text("When macOS asks whether CR Subtitle Reader may control Safari or VoiceOver, choose Allow. Press Continue to begin.")
         }
     }
 
     private var userscripts: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Userscripts is a free, open-source Safari extension that runs the CR Subtitle Reader script on Crunchyroll pages.")
-            StatusLine(label: "Userscripts app", value: state.checker.userscriptsInstalled ? "Installed" : "Not installed", ok: state.checker.userscriptsInstalled)
-            HStack {
-                Button("Open Userscripts in the App Store") { state.checker.openUserscriptsInAppStore() }
-                Button("Check Again") { state.checker.refreshLocal() }
+            Text("Userscripts is a free, open-source Safari extension that runs the CR Subtitle Reader script on Crunchyroll pages. Install it from the App Store, then come back: this page notices the installation by itself.")
+            StatusLine(label: "Userscripts app", value: state.checker.userscriptsInstalled ? "Installed" : "Not installed yet", ok: state.checker.userscriptsInstalled)
+            Button("Open Userscripts in the App Store") { state.checker.openUserscriptsInAppStore() }
+        }
+    }
+
+    private var safariAccess: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("CR Subtitle Reader talks to Safari to verify the setup and to read subtitles in the background. Two things are needed, and this page checks them continuously:")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("1. If macOS asks whether CR Subtitle Reader may control Safari, choose Allow.")
+                Text("2. In Safari, press Command+Comma, open the Advanced tab and turn on “Show features for web developers”. Then open the new Developer tab and turn on “Allow JavaScript from Apple Events”.")
             }
-            if !state.checker.userscriptsInstalled {
-                Text("After installing, come back here. This page checks automatically every few seconds.")
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("Great, Userscripts is installed. Press Continue.")
+            StatusLine(label: "Safari access", value: safariStatusText, ok: probeOK(state.checker.safariJavaScript))
+            HStack {
+                Button("Open Safari") { state.checker.openSafari() }
+                Button("Open Automation Settings") { state.checker.openAutomationSettings() }
             }
         }
     }
 
-    private var installScript: some View {
+    private var safariStatusText: String {
+        switch state.checker.safariJavaScript {
+        case .ok: return "Ready"
+        case .disabled: return "Waiting: turn on “Allow JavaScript from Apple Events” in Safari's Developer settings"
+        case .notAuthorized: return "Waiting: allow CR Subtitle Reader to control Safari (System Settings > Privacy & Security > Automation)"
+        case .notRunning: return "Waiting for Safari to open"
+        case .noWindow: return "Waiting: open a Safari window"
+        case .unknown: return "Checking…"
+        case .error(let message): return "Error: \(message)"
+        }
+    }
+
+    private var voiceOverAccess: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("The script is copied into the folder the Userscripts extension reads from. Nothing else on your Mac is changed.")
-            StatusLine(label: "Folder", value: state.checker.scriptsDirectory.path, ok: state.checker.scriptsDirectoryExists)
-            StatusLine(label: "Script", value: state.checker.installedScriptVersion.map { "Installed, version \($0)" } ?? "Not installed", ok: state.checker.scriptInstalled)
-            HStack {
-                Button(state.checker.scriptInstalled ? "Reinstall Script" : "Install Script") { state.installScript() }
-                Button("Choose Folder…") { state.chooseScriptsFolder() }
-                Button("Show in Finder") { ScriptInstaller.revealInFinder(state.checker.scriptsDirectory) }
+            Text("With this permission the app can speak through VoiceOver itself, using your voice, rate and braille display, even while you are in another app. This page checks continuously:")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("1. If macOS asks whether CR Subtitle Reader may control VoiceOver, choose Allow.")
+                Text("2. Open VoiceOver Utility (VO-F8), choose General and turn on “Allow VoiceOver to be controlled with AppleScript”.")
             }
+            StatusLine(label: "VoiceOver access", value: voiceOverStatusText, ok: probeOK(state.checker.voiceOverControl))
+            HStack {
+                Button("Open VoiceOver Utility") { state.checker.openVoiceOverUtility() }
+                Button("Open Automation Settings") { state.checker.openAutomationSettings() }
+            }
+            Text("You can skip this step: subtitles are still read inside Safari without it.")
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var voiceOverStatusText: String {
+        switch state.checker.voiceOverControl {
+        case .ok: return "Ready"
+        case .disabled: return "Waiting: turn on “Allow VoiceOver to be controlled with AppleScript” in VoiceOver Utility"
+        case .notAuthorized: return "Waiting: allow CR Subtitle Reader to control VoiceOver (System Settings > Privacy & Security > Automation)"
+        case .notRunning: return "VoiceOver is not running"
+        case .unknown: return "Checking…"
+        case .noWindow: return "Checking…"
+        case .error(let message): return "Error: \(message)"
+        }
+    }
+
+    private var activate: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("The script has been placed in the Userscripts folder. Now turn the extension on; Crunchyroll is open in Safari and this page notices as soon as the script starts running:")
+            VStack(alignment: .leading, spacing: 6) {
+                Text("1. In Safari, press Command+Comma and open the Extensions tab. Turn on Userscripts.")
+                Text("2. Select Userscripts in the list and allow it for crunchyroll.com, or choose “Allow on Every Website”.")
+            }
+            StatusLine(label: "Script file", value: state.checker.installedScriptVersion.map { "Installed, version \($0)" } ?? "Not installed", ok: state.checker.scriptInstalled)
+            StatusLine(label: "Script on Crunchyroll", value: activationStatusText, ok: activityOK(state.checker.scriptActivity))
+            HStack {
+                Button("Open Safari") { state.checker.openSafari() }
+                Button("Open Crunchyroll") { startActivationWatch() }
+                Button("Choose Script Folder…") { state.chooseScriptsFolder() }
+            }
+            Text("Folder: \(state.checker.scriptsDirectory.path)")
+                .foregroundStyle(.secondary)
             if !state.installMessage.isEmpty {
                 Text(state.installMessage).foregroundStyle(.secondary)
             }
-            Text("If you changed the “Save Location” inside the Userscripts app, use Choose Folder to point at that folder.")
-                .foregroundStyle(.secondary)
         }
     }
 
-    private var enableExtension: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Safari extensions are off until you enable them. Do this once:")
-            VStack(alignment: .leading, spacing: 6) {
-                Text("1. Open Safari and press Command+Comma to open Settings.")
-                Text("2. Go to the Extensions tab and turn on Userscripts.")
-                Text("3. Still in the Extensions tab, select Userscripts and set crunchyroll.com to “Allow” or choose “Allow on Every Website”.")
-                Text("4. Alternatively, open crunchyroll.com, press the Userscripts button in Safari's toolbar and choose “Always Allow on This Website”.")
-            }
-            HStack {
-                Button("Open Safari") { state.checker.openSafari() }
-                Button("Open Crunchyroll in Safari") { state.checker.openInSafari(AppInfo.crunchyrollURL) }
-                Button("Open the Userscripts App") { state.checker.openUserscriptsApp() }
-            }
-            Text("The Userscripts app has an “Open Safari Settings” button that jumps straight to the Extensions tab.")
-                .foregroundStyle(.secondary)
+    private var activationStatusText: String {
+        if state.checker.safariJavaScript != .ok {
+            return "Cannot verify without Safari access (step 3). Finish the two steps above, then open an episode and listen."
         }
-    }
-
-    private var safariJavaScript: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Optional, but recommended. This Safari setting lets the app talk to the page: it enables background reading through VoiceOver, the quick actions in the menu bar, and automatic verification.")
-            VStack(alignment: .leading, spacing: 6) {
-                Text("1. In Safari, press Command+Comma and open the Advanced tab.")
-                Text("2. Turn on “Show features for web developers”.")
-                Text("3. A Developer tab appears. Open it and turn on “Allow JavaScript from Apple Events”.")
-            }
-            StatusLine(label: "Safari setting", value: state.checker.safariJavaScript.label, ok: probeOK(state.checker.safariJavaScript))
-            HStack {
-                Button("Open Safari") { state.checker.openSafari() }
-                Button("Check Now") {
-                    state.checker.probeSafari()
-                    Accessibility.announce("Safari setting: \(state.checker.safariJavaScript.label)")
-                }
-                Button("Open Automation Settings") { state.checker.openAutomationSettings() }
-            }
-            Text("Safari must be open with at least one window for the check to work. The first check makes macOS ask whether CR Subtitle Reader may control Safari; choose Allow. If you declined earlier, enable it under System Settings > Privacy & Security > Automation.")
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var voiceOverControl: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Optional. With this VoiceOver setting the app can speak subtitles through VoiceOver itself, using your voice, rate and braille display, even while you are in another app.")
-            VStack(alignment: .leading, spacing: 6) {
-                Text("1. Open VoiceOver Utility (VO-F8, or from Applications > Utilities).")
-                Text("2. In the General category, turn on “Allow VoiceOver to be controlled with AppleScript”.")
-            }
-            StatusLine(label: "VoiceOver control", value: state.checker.voiceOverControl.label, ok: probeOK(state.checker.voiceOverControl))
-            HStack {
-                Button("Open VoiceOver Utility") { state.checker.openVoiceOverUtility() }
-                Button("Test Now") { state.checker.probeVoiceOver() }
-                Button("Open Automation Settings") { state.checker.openAutomationSettings() }
-            }
-            Text("The test speaks a short sentence through VoiceOver when it succeeds. The first test makes macOS ask whether CR Subtitle Reader may control VoiceOver; choose Allow.")
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var verify: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Let's make sure the script is running. This opens crunchyroll.com in Safari and asks the page whether CR Subtitle Reader is active. It needs the Safari setting from the previous step; without it, simply open an episode and listen.")
-            StatusLine(label: "Script on Crunchyroll", value: state.checker.scriptActivity.label, ok: activityOK(state.checker.scriptActivity))
-            HStack {
-                Button(verifying ? "Verifying…" : "Open Crunchyroll and Verify") { runVerification() }
-                    .disabled(verifying)
-                Button("Check Current Tab") {
-                    state.checker.probeScript()
-                    Accessibility.announce(state.checker.scriptActivity.label)
-                }
-            }
-            if !verifyMessage.isEmpty {
-                Text(verifyMessage).foregroundStyle(.secondary)
-            }
+        switch state.checker.scriptActivity {
+        case .active(let version, _, _): return "Running (version \(version))"
+        case .notActive: return "Waiting for the extension to be turned on and allowed for crunchyroll.com…"
+        case .noCrunchyrollTab: return "Opening crunchyroll.com in Safari…"
+        case .cannotVerify: return "Waiting for Safari access…"
+        case .unknown: return "Checking…"
         }
     }
 
     private var finish: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Everything is in place. Open any episode on Crunchyroll in Safari and VoiceOver will read the subtitles as they appear.")
+            Text("Everything is ready. Press Finish: this window closes and CR Subtitle Reader keeps working from the menu bar. Open any episode on Crunchyroll in Safari and VoiceOver reads the subtitles as they appear.")
             VStack(alignment: .leading, spacing: 6) {
                 Text("Shortcuts inside the Crunchyroll page:")
                 Text("• Option+Shift+S: turn subtitle reading on or off")
@@ -253,7 +295,7 @@ struct SetupWizardView: View {
             ))
             Toggle("Check for updates automatically", isOn: $autoCheckUpdates)
             Toggle("Start background reading through VoiceOver when the app launches", isOn: $startReadingOnLaunch)
-            Text("You can change these later in Settings (Command+Comma). Press Finish to open the dashboard.")
+            Text("Change these any time in Settings (Command+Comma). Closing or minimizing the window keeps the app running; Command+Q quits it.")
                 .foregroundStyle(.secondary)
         }
     }
@@ -273,30 +315,6 @@ struct SetupWizardView: View {
         case .unknown: return nil
         case .active: return true
         default: return false
-        }
-    }
-
-    private func runVerification() {
-        verifying = true
-        verifyMessage = "Opening Crunchyroll in Safari…"
-        state.checker.openInSafari(AppInfo.crunchyrollURL)
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 7_000_000_000)
-            state.checker.probeScript()
-            verifying = false
-            switch state.checker.scriptActivity {
-            case .active:
-                verifyMessage = "The CR Subtitle Reader script is running on Crunchyroll. You are ready to go."
-            case .notActive:
-                verifyMessage = "Safari opened Crunchyroll but the script is not running. Check that Userscripts is turned on in Safari Settings > Extensions and allowed on crunchyroll.com, then verify again."
-            case .cannotVerify:
-                verifyMessage = "Safari is blocking JavaScript from Apple Events, so the app cannot ask the page. Enable the setting from the previous step, or just open an episode and listen."
-            case .noCrunchyrollTab:
-                verifyMessage = "Crunchyroll is not the active tab in Safari's front window. Switch to it and press Check Current Tab."
-            case .unknown:
-                verifyMessage = ""
-            }
-            Accessibility.announce(verifyMessage)
         }
     }
 }

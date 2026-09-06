@@ -104,6 +104,27 @@ on probeVoiceOver(theText)
 	end try
 end probeVoiceOver
 
+-- Silent check of VoiceOver control (empty output speaks nothing).
+-- "enabled", "disabled", "not-authorized" or "not-running".
+on probeVoiceOverSilent()
+	if not (application "VoiceOver" is running) then return "not-running"
+	try
+		tell application "VoiceOver" to output ""
+		return "enabled"
+	on error errMsg number errNum
+		if errNum is -1743 then return "not-authorized"
+		return "disabled"
+	end try
+end probeVoiceOverSilent
+
+-- Reloads the Crunchyroll tab without JavaScript (so Safari injects newly enabled extensions).
+on reloadTab()
+	set theTab to crunchyrollTab()
+	if theTab is missing value then return "no-tab"
+	tell application "Safari" to set URL of theTab to (URL of theTab)
+	return "ok"
+end reloadTab
+
 -- JSON state of the userscript on the current Crunchyroll tab, or "" when unavailable.
 on scriptState()
 	set theTab to crunchyrollTab()

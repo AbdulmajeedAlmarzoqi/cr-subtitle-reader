@@ -94,10 +94,10 @@ final class PrerequisiteChecker: ObservableObject {
         }
     }
 
-    /// Speaks a short phrase through VoiceOver to prove AppleScript control works.
-    func probeVoiceOver() {
+    /// Checks AppleScript control of VoiceOver. Silent by default; `spoken` says a short phrase.
+    func probeVoiceOver(spoken: Bool = false) {
         refreshLocal()
-        let result = bridge.probeVoiceOver(phrase: "CR Subtitle Reader can control VoiceOver.")
+        let result = spoken ? bridge.probeVoiceOver(phrase: "VoiceOver access is ready.") : bridge.probeVoiceOverSilent()
         switch result {
         case "enabled": voiceOverControl = .ok
         case "disabled": voiceOverControl = .disabled
@@ -115,7 +115,9 @@ final class PrerequisiteChecker: ObservableObject {
             let probe = bridge.probeSafariJavaScript()
             if probe == "disabled" || probe == "not-authorized" { scriptActivity = .cannotVerify; return }
             let payload = (try? bridge.readBridge()) ?? ""
-            scriptActivity = payload.isEmpty ? .noCrunchyrollTab : .notActive
+            let activity: ScriptActivity = payload.isEmpty ? .noCrunchyrollTab : .notActive
+            if activity != scriptActivity { Log.info("Script activity: \(activity.label)") }
+            scriptActivity = activity
             return
         }
         guard let data = state.data(using: .utf8),
@@ -126,7 +128,18 @@ final class PrerequisiteChecker: ObservableObject {
         let version = json["version"] as? String ?? "?"
         let language = json["currentLang"] as? String ?? ""
         let cues = json["cues"] as? Int ?? 0
-        scriptActivity = .active(version: version, language: language, cues: cues)
+        let activity = ScriptActivity.active(version: version, language: language, cues: cues)
+        if activity != scriptActivity { Log.info("Script activity: \(activity.label)") }
+        scriptActivity = activity
+    }
+
+    var safariRunning: Bool {
+        !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Safari").isEmpty
+    }
+
+    /// Reloads the active Crunchyroll tab so Safari injects a newly enabled extension.
+    func reloadCrunchyrollTab() {
+        _ = bridge.reloadTab()
     }
 
     func openUserscriptsInAppStore() {

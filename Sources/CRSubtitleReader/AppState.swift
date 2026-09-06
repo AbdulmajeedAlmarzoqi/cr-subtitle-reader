@@ -95,10 +95,25 @@ final class AppState: ObservableObject {
     func finishSetup() {
         setupCompleted = true
         showWizard = false
-        Accessibility.announce("Setup complete.")
+        UserDefaults.standard.removeObject(forKey: PrefKey.wizardStep)
+        AppWindows.closeMain()
+        sayReady()
+    }
+
+    /// One word through VoiceOver (falls back to an accessibility announcement).
+    func sayReady() {
+        speakShort("Ready")
+    }
+
+    func speakShort(_ text: String) {
+        let result = (try? bridge.speakVoiceOver(text)) ?? "error"
+        Log.info("speakShort via VoiceOver -> \(result): \(text)")
+        if result != "ok" { Accessibility.announce(text) }
     }
 
     func rerunSetup() {
+        UserDefaults.standard.removeObject(forKey: PrefKey.wizardStep)
         showWizard = true
+        AppWindows.showMain()
     }
 }

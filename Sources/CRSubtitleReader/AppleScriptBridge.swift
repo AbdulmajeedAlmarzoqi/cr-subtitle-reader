@@ -98,6 +98,8 @@ final class AppleScriptBridge {
     func clearBridge() { _ = try? call("clearBridge") }
     func probeSafariJavaScript() -> String { (try? call("probeSafariJavaScript")) ?? "error" }
     func probeVoiceOver(phrase: String) -> String { (try? call("probeVoiceOver", [phrase])) ?? "error" }
+    func probeVoiceOverSilent() -> String { (try? call("probeVoiceOverSilent")) ?? "error" }
+    func reloadTab() -> String { (try? call("reloadTab")) ?? "error" }
     func scriptState() -> String { (try? call("scriptState")) ?? "" }
     func openInSafari(_ url: URL) throws { try call("openInSafari", [url.absoluteString]) }
     func activateSafari() { _ = try? call("activateSafari") }

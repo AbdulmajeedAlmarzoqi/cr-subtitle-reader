@@ -16,13 +16,13 @@ final class ReaderEngine: ObservableObject {
 
         var description: String {
             switch self {
-            case .stopped: return "Stopped"
-            case .waitingForCrunchyroll: return "Running. Waiting for a Crunchyroll tab in Safari's front window."
-            case .reading: return "Reading subtitles."
-            case .javaScriptBlocked: return "Safari is blocking JavaScript from Apple Events. Enable it in Safari Settings, Developer tab."
-            case .scriptMissing: return "The userscript is not running on this page. Check the Userscripts extension for crunchyroll.com."
+            case .stopped: return "Off"
+            case .waitingForCrunchyroll: return "On. Waiting for a Crunchyroll tab in Safari's front window."
+            case .reading: return "On. Reading subtitles."
+            case .javaScriptBlocked: return "Safari is blocking JavaScript from Apple Events. Enable it in Safari's Developer settings."
+            case .scriptMissing: return "The script is not running on this page. Check the Userscripts extension for crunchyroll.com."
             case .voiceOverUnavailable: return "VoiceOver cannot be controlled with AppleScript. Using the system voice instead."
-            case .notAuthorized: return "macOS has not allowed CR Subtitle Reader to control Safari. Open System Settings > Privacy & Security > Automation and enable Safari and VoiceOver for CR Subtitle Reader."
+            case .notAuthorized: return "Not allowed to control Safari. Enable it in System Settings > Privacy & Security > Automation."
             }
         }
     }
@@ -61,7 +61,7 @@ final class ReaderEngine: ObservableObject {
         status = .waitingForCrunchyroll
         Log.info("Reader started")
         if announce {
-            speak("CR Subtitle Reader started. Open an episode in Safari and I will read its subtitles.")
+            speak("Reading on")
         }
         schedule(after: 0.1)
     }
@@ -74,7 +74,7 @@ final class ReaderEngine: ObservableObject {
         isRunning = false
         status = .stopped
         if announce {
-            speak("CR Subtitle Reader stopped.")
+            speak("Reading off")
         }
     }
 
@@ -171,7 +171,7 @@ final class ReaderEngine: ObservableObject {
         status = .javaScriptBlocked
         if let last = lastJSWarning, Date().timeIntervalSince(last) < warningCooldown { return }
         lastJSWarning = Date()
-        speak("Safari is blocking JavaScript from Apple Events. Enable it in Safari Settings, Developer tab.")
+        speak("Safari is blocking JavaScript from Apple Events. Enable it in Safari's Developer settings.")
     }
 
     private var lastAuthWarning: Date?
@@ -179,13 +179,13 @@ final class ReaderEngine: ObservableObject {
         status = .notAuthorized
         if let last = lastAuthWarning, Date().timeIntervalSince(last) < warningCooldown { return }
         lastAuthWarning = Date()
-        speak("macOS has not allowed CR Subtitle Reader to control Safari. Open System Settings, Privacy and Security, Automation, and enable Safari and VoiceOver for CR Subtitle Reader.")
+        speak("CR Subtitle Reader is not allowed to control Safari. Enable it in System Settings, Privacy and Security, Automation.")
     }
 
     private func warnScriptMissing() {
         status = .scriptMissing
         if let last = lastNoScriptWarning, Date().timeIntervalSince(last) < warningCooldown { return }
         lastNoScriptWarning = Date()
-        speak("The CR Subtitle Reader script is not running on this page. Make sure the Userscripts extension is enabled for crunchyroll.com.")
+        speak("The script is not running on this page. Check the Userscripts extension for crunchyroll.com.")
     }
 }

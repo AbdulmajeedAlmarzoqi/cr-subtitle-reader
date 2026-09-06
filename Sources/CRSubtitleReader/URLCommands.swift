@@ -22,8 +22,8 @@ enum URLCommands {
         case ["page", "language"]: state.sendPageCommand("language", label: "the language command")
         case ["page", "repeat"]: state.sendPageCommand("repeat", label: "the repeat command")
         case ["update", "check"]: Task { await state.updates.check(userInitiated: true) }
-        case ["setup"]: state.rerunSetup(); AppWindows.showMainWindow()
-        case ["show"]: AppWindows.showMainWindow()
+        case ["setup"]: state.rerunSetup(); AppWindows.showMain()
+        case ["show"]: AppWindows.showMain()
         default: Accessibility.announce("Unknown CR Subtitle Reader command: \(url.absoluteString)")
         }
     }
