@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app
+        run: ./scripts/build-app.sh
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CR-Subtitle-Reader
+          path: build/*.zip*
+      - name: Attach to GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then break; fi
+            sleep 20
+          done
+          gh release upload "$GITHUB_REF_NAME" build/*.zip build/*.sha256 --clobber

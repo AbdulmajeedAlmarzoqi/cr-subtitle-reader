@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>VO CR test</title></head>
+<!--
+  Local test harness for the CR Subtitle Reader userscript: fakes the /playback/ response, an ASS file and a
+  <video> element with a controllable time. Run from the repository root:  python3 -m http.server 8765
+  then open http://localhost:8765/test/ and in the console:  await triggerPlayback(); fakeTime = 1.5;  and watch the "spoken" array.
+-->
+<body>
+<div id="player-container"><video id="v"></video></div>
+<pre id="log"></pre>
+<script>
+// fake ASS subtitle content
+window.ASS = [
+'[Script Info]','Title: test','',
+'[Events]',
+'Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text',
+'Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,Hello, world!',
+'Dialogue: 0,0:00:03.50,0:00:05.00,Default,,0,0,0,,{\\an8}Second line\\NWith a break',
+'Dialogue: 0,0:00:05.50,0:00:07.00,Sign,,0,0,0,,SIGN TEXT SHOULD BE SKIPPED',
+'Dialogue: 0,0:00:07.00,0:00:09.00,Default,,0,0,0,,Same again',
+'Dialogue: 0,0:00:09.20,0:00:11.00,Default,,0,0,0,,Same again',
+'Dialogue: 0,0:00:11.00,0:00:13.00,Default,,0,0,0,,Partial',
+'Dialogue: 0,0:00:12.00,0:00:14.00,Default,,0,0,0,,Partial and more',
+'Dialogue: 0,0:00:15.00,0:00:17.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10{\\p0}',
+'Dialogue: 0,0:00:17.00,0:00:19.00,Default,,0,0,0,,Repeat me',
+'Dialogue: 0,0:00:21.00,0:00:23.00,Default,,0,0,0,,Repeat me',
+''].join('\n');
+window.PLAYBACK = { audioLocale: 'ja-JP', subtitles: {
+  'en-US': { format: 'ass', language: 'en-US', url: 'https://v.vrv.co/fake/en.ass?x=1' },
+  'ar-SA': { format: 'ass', language: 'ar-SA', url: 'https://v.vrv.co/fake/ar.ass?x=1' } } };
+// fake underlying fetch (installed BEFORE the userscript wraps it)
+window.fetch = function (input) {
+  var url = typeof input === 'string' ? input : input.url;
+  var body = '';
+  if (url.indexOf('/playback/') !== -1) body = JSON.stringify(window.PLAYBACK);
+  else if (url.indexOf('.ass') !== -1) body = url.indexOf('/ar.ass') !== -1 ? window.ASS.replace(/Hello, world!/, 'مرحبا بالعالم') : window.ASS;
+  else if (url.indexOf('/accounts/v1/me/profile') !== -1) body = JSON.stringify({ preferred_content_subtitle_language: 'ar-SA' });
+  return Promise.resolve(new Response(body, { status: 200, headers: { 'Content-Type': 'application/json' } }));
+};
+// fake video time
+window.fakeTime = 0;
+Object.defineProperty(document.getElementById('v'), 'currentTime', { get: function () { return window.fakeTime; } });
+Object.defineProperty(document.getElementById('v'), 'duration', { get: function () { return 1400; } });
+// record every live region text change
+window.spoken = [];
+new MutationObserver(function () {
+  var el = document.getElementById('crsr-live');
+  if (el && el.textContent) window.spoken.push({ t: window.fakeTime, lang: el.getAttribute('lang'), text: el.textContent });
+}).observe(document.body, { childList: true, subtree: true, characterData: true });
+window.triggerPlayback = function () { return fetch('https://www.crunchyroll.com/playback/v3/GR3VWXP96/web/chrome/play'); };
+window.triggerProfile = function () { return fetch('https://www.crunchyroll.com/accounts/v1/me/profile'); };
+</script>
+<script src="../userscript/cr_subtitle_reader.user.js"></script>
+</body></html>
