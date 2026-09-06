@@ -2,6 +2,11 @@
 
 All notable changes to CR Subtitle Reader are documented here.
 
+## 1.0.4 — 2026-09-06
+
+- Option+Shift+K goes back to the previous subtitle language (Option+Shift+L still goes forward). Also available as "Previous Subtitle Language" in the app's menus and as `crsr://page/language-back`.
+- After an app update replaces the script inside the Userscripts extension, the app now says so and asks you to reload the Crunchyroll page if one is open, since a page keeps running the script it started with.
+
 ## 1.0.3 — 2026-09-06
 
 - No more tone before every subtitle line. VoiceOver on macOS plays its alert sound before any assertive live-region announcement, so the script now uses a polite live region by default. Lines are read one after another without a sound.

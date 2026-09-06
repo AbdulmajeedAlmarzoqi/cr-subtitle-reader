@@ -287,7 +287,7 @@ struct SetupWizardView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Shortcuts inside the Crunchyroll page:")
                 Text("• Option+Shift+S: turn subtitle reading on or off")
-                Text("• Option+Shift+L: switch to the next subtitle language")
+                Text("• Option+Shift+L: next subtitle language, Option+Shift+K: previous one")
                 Text("• Option+Shift+R: repeat the current line")
                 Text("• Option+Shift+I: interrupt mode, where a new line cuts off the previous one (VoiceOver adds a short tone)")
             }
