@@ -33,7 +33,8 @@ It comes as a native macOS app that guides you through the setup step by step, i
    3. In Safari, press Command+Comma, open **Extensions**, turn on Userscripts and allow it on crunchyroll.com.
    4. Optional: in Safari's **Advanced** tab turn on "Show features for web developers", then in the **Developer** tab turn on **Allow JavaScript from Apple Events**. This enables background reading, the menu bar actions and automatic verification.
    5. Optional: in **VoiceOver Utility > General** turn on **Allow VoiceOver to be controlled with AppleScript** so background reading uses VoiceOver's voice and braille.
-4. Open any episode on Crunchyroll in Safari. You will hear "Subtitles loaded: …" and then every line as it appears.
+4. When macOS asks whether CR Subtitle Reader may control Safari and VoiceOver, choose **Allow**. If you ever decline, re-enable it under System Settings > Privacy & Security > Automation.
+5. Open any episode on Crunchyroll in Safari. You will hear "Subtitles loaded: …" and then every line as it appears.
 
 ## Using it
 
