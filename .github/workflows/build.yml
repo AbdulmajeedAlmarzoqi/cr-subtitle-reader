@@ -27,4 +27,8 @@ jobs:
             if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then break; fi
             sleep 20
           done
-          gh release upload "$GITHUB_REF_NAME" build/*.zip build/*.sha256 --clobber
+          if gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' | grep -q '\.zip$'; then
+            echo "Release already has an app archive; keeping it."
+          else
+            gh release upload "$GITHUB_REF_NAME" build/*.zip build/*.sha256
+          fi
