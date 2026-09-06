@@ -87,7 +87,9 @@ final class PrerequisiteChecker: ObservableObject {
     func probeSafari() {
         let result = bridge.probeSafariJavaScript()
         switch result {
-        case "enabled": safariJavaScript = .ok
+        case "enabled":
+            safariJavaScript = .ok
+            UserDefaults.standard.set(true, forKey: PrefKey.safariAccessWasOK)
         case "disabled": safariJavaScript = .disabled
         case "not-running": safariJavaScript = .notRunning
         case "no-window": safariJavaScript = .noWindow
@@ -101,7 +103,9 @@ final class PrerequisiteChecker: ObservableObject {
         refreshLocal()
         let result = spoken ? bridge.probeVoiceOver(phrase: "VoiceOver access is ready.") : bridge.probeVoiceOverSilent()
         switch result {
-        case "enabled": voiceOverControl = .ok
+        case "enabled":
+            voiceOverControl = .ok
+            UserDefaults.standard.set(true, forKey: PrefKey.voiceOverAccessWasOK)
         case "disabled": voiceOverControl = .disabled
         case "not-running": voiceOverControl = .notRunning
         case "not-authorized": voiceOverControl = .notAuthorized

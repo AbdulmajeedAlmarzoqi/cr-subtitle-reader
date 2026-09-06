@@ -48,4 +48,6 @@ enum PrefKey {
     static let startReadingOnLaunch = "startReadingOnLaunch"
     static let wizardStep = "wizardStep"
     static let stayInMenuBar = "stayInMenuBar"
+    static let safariAccessWasOK = "safariAccessWasOK"
+    static let voiceOverAccessWasOK = "voiceOverAccessWasOK"
 }

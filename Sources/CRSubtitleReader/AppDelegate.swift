@@ -20,6 +20,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if LaunchOptions.reset {
+            state.factoryReset(relaunch: false)
+            return
+        }
         Log.info("Launched \(AppInfo.name) \(AppInfo.version) from \(Bundle.main.bundleURL.path); bridge loaded: \(state.bridge.isLoaded)")
         if state.stayInMenuBar { installStatusItem() }
         state.$stayInMenuBar
@@ -42,7 +46,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // A newer script shipped with this build? Refresh the copy inside the extension quietly.
             state.checker.refreshLocal()
             if state.checker.scriptInstalled && !state.checker.scriptUpToDate { state.installScript(quiet: true) }
-            if state.stayInMenuBar {
+            if state.handleIssueIfAny() {
+                // Something went missing since the setup: the assistant is open at the right step.
+            } else if state.stayInMenuBar {
                 // Later launches: no window, one word from VoiceOver, then wait in the menu bar.
                 state.sayReady()
                 if UserDefaults.standard.bool(forKey: PrefKey.startReadingOnLaunch) {
@@ -52,6 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 // Plain setup tool: show the status window; closing it quits.
                 AppWindows.showMain()
             }
+            state.startWatchdog()
         } else {
             AppWindows.showMain()
         }

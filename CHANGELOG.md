@@ -2,6 +2,11 @@
 
 All notable changes to CR Subtitle Reader are documented here.
 
+## 1.0.2 — 2026-09-06
+
+- The app now watches its requirements: at every launch and once a minute in the menu bar. If the Userscripts extension or the script goes missing, or Safari or VoiceOver access is revoked, VoiceOver says what is wrong and the setup assistant opens at the step that fixes it.
+- "Reset CR Subtitle Reader…" in Settings (and a `--reset` launch flag) forgets every setting, removes the login item and runs the assistant again.
+
 ## 1.0.1 — 2026-09-06
 
 - The two switches now say what they do. "Mute Subtitles" silences the script inside Safari (the real off switch); "Speak in Background" makes the app read through VoiceOver while you are in another application. Before, "Background Reading Off" looked like a mute but only handed reading back to Safari.

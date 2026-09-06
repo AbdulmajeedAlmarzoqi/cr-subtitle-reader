@@ -32,6 +32,9 @@ struct SettingsView: View {
             Section("Diagnostics") {
                 Button("Reveal Log File") { NSWorkspace.shared.activateFileViewerSelecting([Log.fileURL]) }
                 Text(Log.fileURL.path).foregroundStyle(.secondary)
+                Button("Reset CR Subtitle Reader…") { confirmReset() }
+                Text("Forgets every setting and runs the setup assistant again. The script and permissions are kept.")
+                    .foregroundStyle(.secondary)
             }
             Section("Script folder") {
                 Text(state.checker.scriptsDirectory.path)
@@ -48,6 +51,17 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(minWidth: 560, minHeight: 480)
+        .frame(minWidth: 560, minHeight: 520)
+    }
+
+    private func confirmReset() {
+        let alert = NSAlert()
+        alert.messageText = "Reset CR Subtitle Reader?"
+        alert.informativeText = "All settings are forgotten and the app relaunches with the setup assistant."
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            state.factoryReset(relaunch: true)
+        }
     }
 }

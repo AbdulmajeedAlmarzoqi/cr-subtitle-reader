@@ -35,7 +35,9 @@ enum URLCommands {
 /// Command-line options, mainly for automated testing:
 ///   --skip-relocation        never offer to move the app to /Applications
 ///   --auto-install-update    install an available update without confirmation (testing only)
+///   --reset                  forget all settings and the login item, then quit (factory reset)
 enum LaunchOptions {
     static let skipRelocation = CommandLine.arguments.contains("--skip-relocation")
     static let autoInstallUpdate = CommandLine.arguments.contains("--auto-install-update")
+    static let reset = CommandLine.arguments.contains("--reset")
 }

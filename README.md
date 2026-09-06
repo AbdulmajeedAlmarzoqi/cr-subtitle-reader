@@ -57,6 +57,10 @@ Two things can read the subtitles, and the app always tells you which one is act
 
 If you only listen inside Safari and do not want a menu bar icon, turn off "Keep running in the menu bar" at the end of the setup or in Settings. The app then quits when you close its window and behaves as a plain setup and status tool.
 
+### If something goes missing later
+
+The app checks its requirements every time it starts and once a minute while it sits in the menu bar. If the Userscripts extension or the script disappears, or an access permission gets revoked, VoiceOver tells you what is missing and the setup assistant opens at the step that fixes it. Settings also has a "Reset CR Subtitle Reader…" button that forgets every setting and runs the assistant from the beginning.
+
 ### Automation with `crsr://` links
 
 The app registers the `crsr` URL scheme, so any tool that can open a link can drive it, for example a VoiceOver Commander AppleScript, a Shortcuts action or the Terminal:

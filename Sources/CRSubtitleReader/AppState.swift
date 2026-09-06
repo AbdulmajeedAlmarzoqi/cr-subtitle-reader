@@ -113,6 +113,104 @@ final class AppState: ObservableObject {
         }
     }
 
+    // MARK: Requirements watchdog
+
+    struct RequirementIssue {
+        let step: WizardStep
+        let message: String
+    }
+
+    private var watchdog: Timer?
+    private var lastPageWarning: Date?
+
+    /// The first thing that is missing, or nil when everything needed is in place.
+    /// Access permissions are only reported when they worked before (so a user who skipped
+    /// the optional VoiceOver step is not nagged), or when `strict` is set.
+    func findIssue(strict: Bool = false) -> RequirementIssue? {
+        checker.refreshLocal()
+        if !checker.userscriptsInstalled {
+            return RequirementIssue(step: .userscripts, message: "The Userscripts extension is missing.")
+        }
+        if !checker.scriptInstalled {
+            return RequirementIssue(step: .activate, message: "The subtitle script is missing from the Userscripts folder.")
+        }
+        let defaults = UserDefaults.standard
+        if checker.safariRunning && (strict || defaults.bool(forKey: PrefKey.safariAccessWasOK)) {
+            checker.probeSafari()
+            switch checker.safariJavaScript {
+            case .disabled: return RequirementIssue(step: .safariAccess, message: "Safari is no longer allowing JavaScript from Apple Events.")
+            case .notAuthorized: return RequirementIssue(step: .safariAccess, message: "CR Subtitle Reader is no longer allowed to control Safari.")
+            default: break
+            }
+        }
+        if checker.voiceOverRunning && (strict || defaults.bool(forKey: PrefKey.voiceOverAccessWasOK)) {
+            checker.probeVoiceOver()
+            switch checker.voiceOverControl {
+            case .disabled: return RequirementIssue(step: .voiceOverAccess, message: "VoiceOver is no longer allowing AppleScript control.")
+            case .notAuthorized: return RequirementIssue(step: .voiceOverAccess, message: "CR Subtitle Reader is no longer allowed to control VoiceOver.")
+            default: break
+            }
+        }
+        return nil
+    }
+
+    /// Checks the requirements; when something is missing, says so and opens the setup assistant
+    /// at the step that fixes it. Returns true when an issue was found.
+    @discardableResult
+    func handleIssueIfAny(strict: Bool = false) -> Bool {
+        guard let issue = findIssue(strict: strict) else { return false }
+        Log.error("Requirement issue: \(issue.message)")
+        openWizard(at: issue.step)
+        speakShort("\(issue.message) Let's fix it.")
+        return true
+    }
+
+    func openWizard(at step: WizardStep) {
+        UserDefaults.standard.set(step.rawValue, forKey: PrefKey.wizardStep)
+        showWizard = true
+        AppWindows.showMain()
+    }
+
+    /// Keeps an eye on the requirements while the app lives in the menu bar.
+    func startWatchdog() {
+        watchdog?.invalidate()
+        watchdog = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.watchdogTick() }
+        }
+    }
+
+    private func watchdogTick() {
+        guard setupCompleted, !showWizard, !AppWindows.isMainVisible else { return }
+        if handleIssueIfAny() { return }
+        // Script installed but not running on an open Crunchyroll episode: the extension is
+        // probably off or not allowed for the site.
+        guard UserDefaults.standard.bool(forKey: PrefKey.safariAccessWasOK) else { return }
+        checker.probeScript()
+        if case .notActive = checker.scriptActivity {
+            if let last = lastPageWarning, Date().timeIntervalSince(last) < 600 { return }
+            lastPageWarning = Date()
+            Log.error("Script not active on the open Crunchyroll page")
+            openWizard(at: .activate)
+            speakShort("The subtitle script is not running on this Crunchyroll page. Let's check the extension.")
+        }
+    }
+
+    // MARK: Factory reset
+
+    /// Forgets every setting and the login item. The installed script and permissions stay.
+    func factoryReset(relaunch: Bool) {
+        reader.stop(announce: false)
+        try? LaunchAtLogin.set(false)
+        UserDefaults.standard.removePersistentDomain(forName: AppInfo.bundleIdentifier)
+        UserDefaults.standard.synchronize()
+        try? FileManager.default.removeItem(at: Log.fileURL)
+        if relaunch {
+            UpdateInstaller.relaunch(at: Bundle.main.bundleURL)
+        } else {
+            NSApp.terminate(nil)
+        }
+    }
+
     // MARK: Which channel is reading right now
 
     /// Plain-language description of who is speaking subtitles at the moment.
