@@ -113,10 +113,6 @@ The Xcode project is generated from `project.yml` with [XcodeGen](https://github
 
 macOS ties the Safari and VoiceOver Automation permissions to the app's code-signing identity, so releases must always carry the same identity. They are signed with the Developer ID certificate of team `JLNFD3HP3G`, which Xcode creates and keeps for the signed-in Apple Developer account, and notarized by Apple: `xcodebuild -exportArchive` with `scripts/ExportOptions.plist` (`method: developer-id`, `destination: upload`) uploads the archive to the notary service, and `xcodebuild -exportNotarizedApp` returns the stapled app once Apple has approved it. The resulting designated requirement is based on the Team ID, so permissions survive updates and certificate renewals. The in-app updater verifies that a downloaded build is signed by that team before installing it.
 
-### Coding agents and Xcode's MCP server
-
-The repository ships a `.mcp.json` that connects MCP-capable coding agents to Xcode's MCP tools through `xcrun mcpbridge` (build, diagnostics, documentation search, previews, tests). Turn on "Model Context Protocol" under Xcode > Settings > Intelligence, open `CRSubtitleReader.xcodeproj` in Xcode, and approve the agent when Xcode asks.
-
 ## Releasing
 
 1. Bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist`, `@version` in `userscript/cr_subtitle_reader.user.js` (and its `.meta.js`), and update `CHANGELOG.md`.
