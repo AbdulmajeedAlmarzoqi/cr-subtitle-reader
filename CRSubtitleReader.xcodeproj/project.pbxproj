@@ -1,0 +1,417 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		054F01D30ACB1285FE97E68C /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA02493382468535114DCF2 /* AppState.swift */; };
+		0E09F58E52F248E6D13E2BEE /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = BB8CE66D44837132F9AEDE54 /* AppIcon.icns */; };
+		0E1DF838069429DA1D2C7987 /* UpdateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22238BED9C8D501D8A89AEA6 /* UpdateView.swift */; };
+		2969AE84CC30B4229B77051B /* AppWindows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ABE0A5B55EB92F848C5365F /* AppWindows.swift */; };
+		32C901251A837919C4FB8306 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6588F959AD39B331ABC8C /* AboutView.swift */; };
+		40E9E506B4E5AB38CD229DEF /* cr_subtitle_reader.user.js in Resources */ = {isa = PBXBuildFile; fileRef = 230D9FBACF18565C3C6404F7 /* cr_subtitle_reader.user.js */; };
+		41615F50BB5443B59641561A /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A46098585D31630056437D2 /* AppDelegate.swift */; };
+		49119E7DCF832C645C8DD72F /* ReaderEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B5E96A5C96A409FE858B25F /* ReaderEngine.swift */; };
+		4FDEAA9B0F4C886FF750AD6C /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9C8976E80C67F3563AA0A59 /* Log.swift */; };
+		760622D6CD4EA82298A95010 /* CodeSignature.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC65ABEA7CC25F2BD9E53E8F /* CodeSignature.swift */; };
+		7FEBF830E71FE3751750471A /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F8D4E5FB86D09F20862288 /* Constants.swift */; };
+		8E98188BB0E51E11855C02E1 /* Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = E97932C377AEAF0255CE6681 /* Support.swift */; };
+		A37787D89904555C987E01FC /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B7A4E8B42B32907792A62B /* UpdateManager.swift */; };
+		A42628B324035032743920CA /* PrerequisiteChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820831EA36AC9DBC26CE8428 /* PrerequisiteChecker.swift */; };
+		A4BB449490981576E139380B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6AC724A0E3C78C4466C883E /* DashboardView.swift */; };
+		B3B90D275B831DFBCCEFC26D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0628A5778066C486811878A9 /* SettingsView.swift */; };
+		BDF113464992AA630CA51BCB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F42D451D21148BCECA2E4EB3 /* ContentView.swift */; };
+		C2D10CF7DFFBC2AD6F5D5E6D /* URLCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133AD06A7A0625862B515175 /* URLCommands.swift */; };
+		D3F594CE3721107632220DE2 /* AppleScriptBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36BD743501A2E513570FCE70 /* AppleScriptBridge.swift */; };
+		D6B63B0772E02D3CC9C6508F /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F0787A79DF38151C082DED /* main.swift */; };
+		D8B0F088FC75BC27D2DE54EB /* CRSubtitleReaderBridge.applescript in Resources */ = {isa = PBXBuildFile; fileRef = 6C60C371A5337F1100DA77A5 /* CRSubtitleReaderBridge.applescript */; };
+		D9A821E09878089E41573683 /* SetupWizardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 427E3395CBF9D5FED0FC5019 /* SetupWizardView.swift */; };
+		FE4653FF0E79BB54B31119C1 /* ScriptInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10E1A95B38BAD25667521F4 /* ScriptInstaller.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0628A5778066C486811878A9 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0ABE0A5B55EB92F848C5365F /* AppWindows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppWindows.swift; sourceTree = "<group>"; };
+		0B6C9487B0FCCFE7B054BBE1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		133AD06A7A0625862B515175 /* URLCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCommands.swift; sourceTree = "<group>"; };
+		1A46098585D31630056437D2 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		1EA02493382468535114DCF2 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		22238BED9C8D501D8A89AEA6 /* UpdateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateView.swift; sourceTree = "<group>"; };
+		230D9FBACF18565C3C6404F7 /* cr_subtitle_reader.user.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = cr_subtitle_reader.user.js; path = ../userscript/cr_subtitle_reader.user.js; sourceTree = "<group>"; };
+		36BD743501A2E513570FCE70 /* AppleScriptBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptBridge.swift; sourceTree = "<group>"; };
+		41E6EEFE74773C82DF5378D1 /* CRSubtitleReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CRSubtitleReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		427E3395CBF9D5FED0FC5019 /* SetupWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupWizardView.swift; sourceTree = "<group>"; };
+		45B7A4E8B42B32907792A62B /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
+		4DC6588F959AD39B331ABC8C /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
+		6B5E96A5C96A409FE858B25F /* ReaderEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderEngine.swift; sourceTree = "<group>"; };
+		6BF7298DED2B1C480741DAAD /* CRSubtitleReader.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CRSubtitleReader.entitlements; sourceTree = "<group>"; };
+		6C60C371A5337F1100DA77A5 /* CRSubtitleReaderBridge.applescript */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.applescript; name = CRSubtitleReaderBridge.applescript; path = ../applescript/CRSubtitleReaderBridge.applescript; sourceTree = "<group>"; };
+		73F0787A79DF38151C082DED /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		76F8D4E5FB86D09F20862288 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		820831EA36AC9DBC26CE8428 /* PrerequisiteChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrerequisiteChecker.swift; sourceTree = "<group>"; };
+		AC65ABEA7CC25F2BD9E53E8F /* CodeSignature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeSignature.swift; sourceTree = "<group>"; };
+		BB8CE66D44837132F9AEDE54 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+		D6AC724A0E3C78C4466C883E /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		D9C8976E80C67F3563AA0A59 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
+		E97932C377AEAF0255CE6681 /* Support.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Support.swift; sourceTree = "<group>"; };
+		F10E1A95B38BAD25667521F4 /* ScriptInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptInstaller.swift; sourceTree = "<group>"; };
+		F42D451D21148BCECA2E4EB3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		0273054FC629481701DC8B25 /* CRSubtitleReader */ = {
+			isa = PBXGroup;
+			children = (
+				4DC6588F959AD39B331ABC8C /* AboutView.swift */,
+				1A46098585D31630056437D2 /* AppDelegate.swift */,
+				36BD743501A2E513570FCE70 /* AppleScriptBridge.swift */,
+				1EA02493382468535114DCF2 /* AppState.swift */,
+				0ABE0A5B55EB92F848C5365F /* AppWindows.swift */,
+				AC65ABEA7CC25F2BD9E53E8F /* CodeSignature.swift */,
+				76F8D4E5FB86D09F20862288 /* Constants.swift */,
+				F42D451D21148BCECA2E4EB3 /* ContentView.swift */,
+				D6AC724A0E3C78C4466C883E /* DashboardView.swift */,
+				D9C8976E80C67F3563AA0A59 /* Log.swift */,
+				73F0787A79DF38151C082DED /* main.swift */,
+				820831EA36AC9DBC26CE8428 /* PrerequisiteChecker.swift */,
+				6B5E96A5C96A409FE858B25F /* ReaderEngine.swift */,
+				F10E1A95B38BAD25667521F4 /* ScriptInstaller.swift */,
+				0628A5778066C486811878A9 /* SettingsView.swift */,
+				427E3395CBF9D5FED0FC5019 /* SetupWizardView.swift */,
+				E97932C377AEAF0255CE6681 /* Support.swift */,
+				45B7A4E8B42B32907792A62B /* UpdateManager.swift */,
+				22238BED9C8D501D8A89AEA6 /* UpdateView.swift */,
+				133AD06A7A0625862B515175 /* URLCommands.swift */,
+			);
+			name = CRSubtitleReader;
+			path = CRSubtitleReader;
+			sourceTree = "<group>";
+		};
+		1C4A1921492168F328F7CF3E /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				0273054FC629481701DC8B25 /* CRSubtitleReader */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		5EFB961044A7AAF26B286FA2 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BB8CE66D44837132F9AEDE54 /* AppIcon.icns */,
+				230D9FBACF18565C3C6404F7 /* cr_subtitle_reader.user.js */,
+				6BF7298DED2B1C480741DAAD /* CRSubtitleReader.entitlements */,
+				6C60C371A5337F1100DA77A5 /* CRSubtitleReaderBridge.applescript */,
+				0B6C9487B0FCCFE7B054BBE1 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		8D331AA00932DA87B6295C37 = {
+			isa = PBXGroup;
+			children = (
+				5EFB961044A7AAF26B286FA2 /* Resources */,
+				1C4A1921492168F328F7CF3E /* Sources */,
+				B887A6703C7F415D1E5867BA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		B887A6703C7F415D1E5867BA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				41E6EEFE74773C82DF5378D1 /* CRSubtitleReader.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EF0B2D17DB55C18C35D97781 /* CRSubtitleReader */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ED1BCB55510A38A7C8DAAB8A /* Build configuration list for PBXNativeTarget "CRSubtitleReader" */;
+			buildPhases = (
+				B2301A45A9FE5FD236F150E4 /* Sources */,
+				B0D744FC26F6ADA43C690DF5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CRSubtitleReader;
+			packageProductDependencies = (
+			);
+			productName = CRSubtitleReader;
+			productReference = 41E6EEFE74773C82DF5378D1 /* CRSubtitleReader.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2C3DA4D91628E00CBD804B7A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					EF0B2D17DB55C18C35D97781 = {
+						DevelopmentTeam = JLNFD3HP3G;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 1A1083725575DDE081E9D4ED /* Build configuration list for PBXProject "CRSubtitleReader" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 8D331AA00932DA87B6295C37;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B887A6703C7F415D1E5867BA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EF0B2D17DB55C18C35D97781 /* CRSubtitleReader */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B0D744FC26F6ADA43C690DF5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0E09F58E52F248E6D13E2BEE /* AppIcon.icns in Resources */,
+				D8B0F088FC75BC27D2DE54EB /* CRSubtitleReaderBridge.applescript in Resources */,
+				40E9E506B4E5AB38CD229DEF /* cr_subtitle_reader.user.js in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		B2301A45A9FE5FD236F150E4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				32C901251A837919C4FB8306 /* AboutView.swift in Sources */,
+				41615F50BB5443B59641561A /* AppDelegate.swift in Sources */,
+				054F01D30ACB1285FE97E68C /* AppState.swift in Sources */,
+				2969AE84CC30B4229B77051B /* AppWindows.swift in Sources */,
+				D3F594CE3721107632220DE2 /* AppleScriptBridge.swift in Sources */,
+				760622D6CD4EA82298A95010 /* CodeSignature.swift in Sources */,
+				7FEBF830E71FE3751750471A /* Constants.swift in Sources */,
+				BDF113464992AA630CA51BCB /* ContentView.swift in Sources */,
+				A4BB449490981576E139380B /* DashboardView.swift in Sources */,
+				4FDEAA9B0F4C886FF750AD6C /* Log.swift in Sources */,
+				A42628B324035032743920CA /* PrerequisiteChecker.swift in Sources */,
+				49119E7DCF832C645C8DD72F /* ReaderEngine.swift in Sources */,
+				FE4653FF0E79BB54B31119C1 /* ScriptInstaller.swift in Sources */,
+				B3B90D275B831DFBCCEFC26D /* SettingsView.swift in Sources */,
+				D9A821E09878089E41573683 /* SetupWizardView.swift in Sources */,
+				8E98188BB0E51E11855C02E1 /* Support.swift in Sources */,
+				C2D10CF7DFFBC2AD6F5D5E6D /* URLCommands.swift in Sources */,
+				A37787D89904555C987E01FC /* UpdateManager.swift in Sources */,
+				0E1DF838069429DA1D2C7987 /* UpdateView.swift in Sources */,
+				D6B63B0772E02D3CC9C6508F /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		109BC96A8CBBC76A9C33BA74 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = JLNFD3HP3G;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		20235557FD44E3804F526D4E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/CRSubtitleReader.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.abdulmajeedalmarzoqi.crsubtitlereader;
+				PRODUCT_NAME = "CR Subtitle Reader";
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+			};
+			name = Release;
+		};
+		25F0F8E367D1D9E8EC611214 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = JLNFD3HP3G;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		411CEC38E9D6D18BED364AF5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Resources/CRSubtitleReader.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.abdulmajeedalmarzoqi.crsubtitlereader;
+				PRODUCT_NAME = "CR Subtitle Reader";
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1A1083725575DDE081E9D4ED /* Build configuration list for PBXProject "CRSubtitleReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				109BC96A8CBBC76A9C33BA74 /* Debug */,
+				25F0F8E367D1D9E8EC611214 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		ED1BCB55510A38A7C8DAAB8A /* Build configuration list for PBXNativeTarget "CRSubtitleReader" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				411CEC38E9D6D18BED364AF5 /* Debug */,
+				20235557FD44E3804F526D4E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2C3DA4D91628E00CBD804B7A /* Project object */;
+}

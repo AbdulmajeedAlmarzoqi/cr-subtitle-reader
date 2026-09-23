@@ -1,0 +1,68 @@
+# XcodeGen spec. Regenerate the Xcode project after adding or removing files:
+#   xcodegen generate
+# The generated CRSubtitleReader.xcodeproj is committed so the project opens in Xcode without XcodeGen.
+name: CRSubtitleReader
+options:
+  minimumXcodeGenVersion: "2.40"
+  xcodeVersion: "27.0"
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+settings:
+  base:
+    DEVELOPMENT_TEAM: JLNFD3HP3G
+    SWIFT_VERSION: "5.0"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+    ONLY_ACTIVE_ARCH: NO
+  configs:
+    Debug:
+      ONLY_ACTIVE_ARCH: YES
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      SWIFT_COMPILATION_MODE: wholemodule
+targets:
+  CRSubtitleReader:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/CRSubtitleReader
+        group: Sources
+      # Copied verbatim into Contents/Resources (the app compiles the AppleScript itself at runtime).
+      - path: applescript/CRSubtitleReaderBridge.applescript
+        buildPhase: resources
+        group: Resources
+      - path: userscript/cr_subtitle_reader.user.js
+        buildPhase: resources
+        group: Resources
+      - path: Resources/AppIcon.icns
+        buildPhase: resources
+        group: Resources
+      - path: Resources/Info.plist
+        buildPhase: none
+        group: Resources
+      - path: Resources/CRSubtitleReader.entitlements
+        buildPhase: none
+        group: Resources
+    entitlements:
+      path: Resources/CRSubtitleReader.entitlements
+    settings:
+      base:
+        PRODUCT_NAME: CR Subtitle Reader
+        PRODUCT_BUNDLE_IDENTIFIER: com.abdulmajeedalmarzoqi.crsubtitlereader
+        INFOPLIST_FILE: Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: Resources/CRSubtitleReader.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+        SWIFT_STRICT_CONCURRENCY: minimal
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+    scheme:
+      configVariants: []
+      testTargets: []
+      gatherCoverageData: false

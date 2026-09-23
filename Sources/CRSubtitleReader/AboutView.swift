@@ -34,6 +34,8 @@ struct AboutView: View {
 
                 Text("License").font(.headline).accessibilityAddTraits(.isHeader)
                 Text("Free and open source under the GNU General Public License v3.0 or later, like the NVDA add-on it builds on.")
+                Text("Releases are signed with the developer's Apple Developer ID certificate and notarized by Apple\(CodeSignature.currentTeamIdentifier.map { " (team \($0))" } ?? "").")
+                    .foregroundStyle(.secondary)
 
                 DisclosureGroup("AppleScript bridge source", isExpanded: $showSource) {
                     ScrollView {

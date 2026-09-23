@@ -150,6 +150,7 @@ final class UpdateManager: ObservableObject {
             let newAppURL = try await Task.detached(priority: .userInitiated) {
                 try UpdateInstaller.extractApp(from: zipURL, expectedVersion: release.version)
             }.value
+            Accessibility.announce("Update verified. Installing.")
             try UpdateInstaller.replaceRunningApp(with: newAppURL)
             Accessibility.announce("Update installed. CR Subtitle Reader will now relaunch.")
             UpdateInstaller.relaunch(at: Bundle.main.bundleURL)
@@ -256,7 +257,9 @@ enum UpdateInstaller {
         guard !SemanticVersion.isNewer(expectedVersion, than: version) else {
             throw UpdateError.versionMismatch(expected: expectedVersion, found: version)
         }
-        removeQuarantine(appURL)
+        // Only a release signed with this team's Developer ID certificate may replace the app.
+        try CodeSignature.verifyDeveloperID(appAt: appURL, bundleIdentifier: AppInfo.bundleIdentifier, teamIdentifier: AppInfo.teamIdentifier)
+        Log.info("Update \(version) passed the Developer ID signature check (team \(AppInfo.teamIdentifier))")
         return appURL
     }
 
@@ -272,14 +275,6 @@ enum UpdateInstaller {
             }
         }
         return nil
-    }
-
-    private static func removeQuarantine(_ url: URL) {
-        let xattr = Process()
-        xattr.executableURL = URL(fileURLWithPath: "/usr/bin/xattr")
-        xattr.arguments = ["-dr", "com.apple.quarantine", url.path]
-        try? xattr.run()
-        xattr.waitUntilExit()
     }
 
     /// Swaps the running bundle with the new one. The old copy goes to the Trash.

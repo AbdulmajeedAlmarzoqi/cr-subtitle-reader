@@ -1,70 +1,84 @@
 #!/bin/bash
-# Builds "CR Subtitle Reader.app" (universal) into build/ and zips it for release.
-# Requires the Xcode Command Line Tools (swift, lipo, codesign, ditto, iconutil).
-#   ./scripts/build-app.sh                       # release build, arm64 + x86_64
-#   ARCHS=arm64 ./scripts/build-app.sh           # single architecture
-#   CODESIGN_IDENTITY="Developer ID Application: …" ./scripts/build-app.sh
+# Release pipeline: archive with Xcode, sign with the team's Developer ID certificate (managed by
+# Xcode), notarize with Apple, staple the ticket, verify, and zip.
+#
+# Needs Xcode 16 or later with the Apple Developer account for team JLNFD3HP3G signed in under
+# Xcode > Settings > Accounts. Xcode creates and stores the Developer ID certificate itself.
+#
+#   ./scripts/build-app.sh            # release: archive + Developer ID + notarize + staple + zip
+#   ./scripts/build-app.sh dev        # local build signed with Apple Development, not notarized
+#   ./scripts/build-app.sh ci         # unsigned compile check (no Apple account needed)
 set -euo pipefail
 cd "$(dirname "$0")/.."
+export DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}
 
+MODE=${1:-release}
 VERSION=$(/usr/bin/plutil -extract CFBundleShortVersionString raw Resources/Info.plist)
 APP_NAME="CR Subtitle Reader"
-APP="build/$APP_NAME.app"
-ARCHS=${ARCHS:-arm64 x86_64}
-# Sign with a stable identity whenever one exists: macOS keys the Safari/VoiceOver Automation
-# permission to the signing identity, and an ad-hoc signature changes with every build, which
-# makes users approve the app again after each update. See scripts/make-signing-identity.sh.
-STABLE_IDENTITY="CR Subtitle Reader Developer"
-if [ -n "${CODESIGN_IDENTITY:-}" ]; then
-	IDENTITY="$CODESIGN_IDENTITY"
-elif security find-identity -v -p codesigning 2>/dev/null | grep -q "\"$STABLE_IDENTITY\""; then
-	IDENTITY="$STABLE_IDENTITY"
-else
-	IDENTITY="-"
-	echo "warning: no signing identity found; signing ad-hoc (permissions will not survive updates). Run scripts/make-signing-identity.sh." >&2
-fi
+PROJECT=CRSubtitleReader.xcodeproj
+SCHEME=CRSubtitleReader
+ARCHIVE=build/CRSubtitleReader.xcarchive
+DERIVED=build/DerivedData
 mkdir -p build
 
-echo "==> Building $APP_NAME $VERSION for: $ARCHS"
-SLICES=()
-for ARCH in $ARCHS; do
-	TRIPLE="$ARCH-apple-macosx13.0"
-	swift build -c release --triple "$TRIPLE" --product CRSubtitleReader
-	SLICES+=("$(swift build -c release --triple "$TRIPLE" --show-bin-path)/CRSubtitleReader")
+# The project lists source files explicitly, so regenerate it whenever XcodeGen is available
+# (cheap, and it picks up files added since the last generation).
+if command -v xcodegen >/dev/null 2>&1; then
+	echo "==> Regenerating $PROJECT from project.yml"
+	xcodegen generate --quiet
+fi
+
+case "$MODE" in
+ci)
+	echo "==> Compile check (unsigned)"
+	xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release -derivedDataPath "$DERIVED" \
+		CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY= DEVELOPMENT_TEAM= build | grep -E "error:|BUILD"
+	exit 0 ;;
+dev)
+	echo "==> Local build ($APP_NAME $VERSION, Apple Development signature, not notarized)"
+	rm -rf "build/$APP_NAME.app"
+	xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release -derivedDataPath "$DERIVED" build | grep -E "error:|BUILD"
+	cp -R "$DERIVED/Build/Products/Release/$APP_NAME.app" build/
+	echo "==> Done: build/$APP_NAME.app"
+	exit 0 ;;
+release) ;;
+*)
+	echo "usage: $0 [release|dev|ci]" >&2
+	exit 2 ;;
+esac
+
+echo "==> Archiving $APP_NAME $VERSION (universal)"
+rm -rf "$ARCHIVE" build/export build/notarized "build/$APP_NAME.app" build/notarize.log
+xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release -destination "generic/platform=macOS" \
+	-archivePath "$ARCHIVE" -derivedDataPath "$DERIVED" archive -allowProvisioningUpdates | grep -E "error:|ARCHIVE"
+lipo -info "$ARCHIVE/Products/Applications/$APP_NAME.app/Contents/MacOS/$APP_NAME"
+
+echo "==> Signing with Developer ID and uploading to Apple's notary service"
+xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportOptionsPlist scripts/ExportOptions.plist \
+	-exportPath build/export -allowProvisioningUpdates | grep -E "error:|Uploaded|EXPORT"
+
+echo "==> Waiting for Apple to notarize"
+for attempt in $(seq 1 60); do
+	if xcodebuild -exportNotarizedApp -archivePath "$ARCHIVE" -exportPath build/notarized >build/notarize.log 2>&1; then
+		echo "notarized (attempt $attempt)"
+		break
+	fi
+	if [ "$attempt" -eq 60 ]; then
+		echo "notarization did not finish in 30 minutes; see build/notarize.log" >&2
+		exit 1
+	fi
+	sleep 30
 done
-if [ "${#SLICES[@]}" -gt 1 ]; then
-	lipo -create "${SLICES[@]}" -output build/CRSubtitleReader-universal
-	BIN="build/CRSubtitleReader-universal"
-else
-	BIN="${SLICES[0]}"
-fi
+APP="build/notarized/$APP_NAME.app"
+cp -R "$APP" "build/$APP_NAME.app"
 
-if [ ! -f Resources/AppIcon.icns ]; then
-	echo "==> Generating app icon"
-	swiftc -O scripts/make-icon.swift -o build/make-icon
-	build/make-icon Resources/AppIcon.icns
-fi
-
-echo "==> Assembling bundle"
-rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN" "$APP/Contents/MacOS/$APP_NAME"
-lipo -info "$APP/Contents/MacOS/$APP_NAME"
-cp Resources/Info.plist "$APP/Contents/Info.plist"
-printf 'APPL????' > "$APP/Contents/PkgInfo"
-cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
-cp userscript/cr_subtitle_reader.user.js "$APP/Contents/Resources/"
-cp applescript/CRSubtitleReaderBridge.applescript "$APP/Contents/Resources/"
-
-echo "==> Signing ($IDENTITY)"
-# The apple-events entitlement is mandatory under the Hardened Runtime; without it macOS silently
-# refuses every Apple Event the app sends to Safari and VoiceOver (error -1743, no permission prompt).
-codesign --force --deep --sign "$IDENTITY" --options runtime --entitlements Resources/CRSubtitleReader.entitlements "$APP"
-codesign --verify --verbose=1 "$APP"
-codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "com.apple.security.automation.apple-events" && echo "entitlement: apple-events OK"
+echo "==> Verifying"
+xcrun stapler validate "$APP" | tail -1
+codesign --verify --deep --strict --verbose=1 "$APP"
+spctl -a -vv -t exec "$APP" 2>&1 | grep -E "source=|origin="
 
 ZIP="build/CR-Subtitle-Reader-$VERSION.zip"
 rm -f "$ZIP" "$ZIP.sha256"
 ditto -c -k --keepParent "$APP" "$ZIP"
 shasum -a 256 "$ZIP" | tee "$ZIP.sha256"
-echo "==> Done: $APP and $ZIP"
+echo "==> Done: build/$APP_NAME.app and $ZIP"

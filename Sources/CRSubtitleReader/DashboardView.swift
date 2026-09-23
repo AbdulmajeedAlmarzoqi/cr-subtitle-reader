@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import AppKit
 
 /// Live status after setup. Everything refreshes by itself every few seconds.

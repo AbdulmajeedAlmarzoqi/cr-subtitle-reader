@@ -26,8 +26,7 @@ It comes as a native macOS app that guides you through the setup step by step, i
 ## Install
 
 1. Download `CR-Subtitle-Reader-<version>.zip` from the [latest release](https://github.com/AbdulmajeedAlmarzoqi/cr-subtitle-reader/releases/latest) and unzip it.
-2. Move **CR Subtitle Reader.app** to your Applications folder with Finder, then open it from there. Do not open it straight from the unzipped folder: macOS then runs it from a temporary random path ("App Translocation"), forgets its permissions on every launch and blocks updates. If that happens anyway, the app notices and moves itself.
-   The app is signed with the project's own certificate, not notarized by Apple, so the first launch is blocked by Gatekeeper. Open **System Settings > Privacy & Security**, scroll to the message about CR Subtitle Reader and choose **Open Anyway** (or Control-click the app in Finder and choose Open). This is needed once.
+2. Move **CR Subtitle Reader.app** to your Applications folder with Finder, then open it from there. Releases are signed with the developer's Apple Developer ID certificate and notarized by Apple, so macOS opens the app like any other. Do not open it straight from the unzipped folder: macOS then runs it from a temporary random path ("App Translocation"), forgets its permissions on every launch and blocks updates. If that happens anyway, the app notices and moves itself.
 3. Follow the setup assistant. Each step checks itself continuously, so you only follow the instructions and press Continue:
    1. Install the Userscripts extension from the App Store (the page notices when it is installed).
    2. Safari access: choose **Allow** when macOS asks whether the app may control Safari, and in Safari turn on Settings > Advanced > "Show features for web developers", then Developer > **Allow JavaScript from Apple Events**.
@@ -96,24 +95,33 @@ The script never sends data anywhere, never touches your credentials and does no
 
 ## Building from source
 
-Requires the Xcode Command Line Tools (Swift 5.9 or later).
+Requires Xcode 16 or later.
 
 ```bash
 git clone https://github.com/AbdulmajeedAlmarzoqi/cr-subtitle-reader.git
 cd cr-subtitle-reader
-./scripts/build-app.sh
+./scripts/build-app.sh dev
 ```
 
-The universal app lands in `build/CR Subtitle Reader.app` together with a zip and its SHA-256.
+`dev` builds `build/CR Subtitle Reader.app` signed with your own Apple Development certificate. `ci` only compiles, without signing. `release` is the maintainer's pipeline: archive, sign with Developer ID, notarize, staple, verify and zip (see below). `swift build` still compiles the executable through the Swift Package for a quick check.
 
-Signing matters more than usual here: macOS ties the Safari and VoiceOver Automation permissions to the app's code-signing identity, and an ad-hoc signature is a new identity on every build, so users would have to allow the app again after each update. `scripts/make-signing-identity.sh` creates a self-signed "CR Subtitle Reader Developer" certificate once, and `build-app.sh` uses it automatically; releases must be built with that same certificate. Set `CODESIGN_IDENTITY` to use a Developer ID instead. `swift build` alone compiles the executable for development.
+The Xcode project is generated from `project.yml` with [XcodeGen](https://github.com/yonaskolb/XcodeGen) and committed, so it opens in Xcode without XcodeGen installed. After adding or removing source files run `xcodegen generate`; the build script does it by itself when `project.yml` is newer than the project.
 
 `test/index.html` is a small harness that simulates Crunchyroll's playback response, a subtitle file and a video element, so the script's logic can be tested in any browser without an account (`python3 -m http.server 8765`, then open `http://localhost:8765/test/`).
 
+### Signing and notarization
+
+macOS ties the Safari and VoiceOver Automation permissions to the app's code-signing identity, so releases must always carry the same identity. They are signed with the Developer ID certificate of team `JLNFD3HP3G`, which Xcode creates and keeps for the signed-in Apple Developer account, and notarized by Apple: `xcodebuild -exportArchive` with `scripts/ExportOptions.plist` (`method: developer-id`, `destination: upload`) uploads the archive to the notary service, and `xcodebuild -exportNotarizedApp` returns the stapled app once Apple has approved it. The resulting designated requirement is based on the Team ID, so permissions survive updates and certificate renewals. The in-app updater verifies that a downloaded build is signed by that team before installing it.
+
+### Claude Code and Xcode's MCP server
+
+The repository ships a `.mcp.json` that connects Claude Code to Xcode's MCP tools through `xcrun mcpbridge` (build, diagnostics, documentation search, previews, tests). Turn on "Model Context Protocol" under Xcode > Settings > Intelligence, open `CRSubtitleReader.xcodeproj` in Xcode, and approve the agent when Xcode asks.
+
 ## Releasing
 
-1. Bump `CFBundleShortVersionString` in `Resources/Info.plist`, `@version` in `userscript/cr_subtitle_reader.user.js` (and its `.meta.js`), and update `CHANGELOG.md`.
-2. Commit, tag `vX.Y.Z` and push. GitHub Actions builds the app and attaches the zip to the release; the app's updater reads the release notes from the release body.
+1. Bump `CFBundleShortVersionString` and `CFBundleVersion` in `Resources/Info.plist`, `@version` in `userscript/cr_subtitle_reader.user.js` (and its `.meta.js`), and update `CHANGELOG.md`.
+2. Run `./scripts/build-app.sh`. It archives, signs, notarizes, verifies and produces `build/CR-Subtitle-Reader-<version>.zip` with its SHA-256.
+3. Commit, tag `vX.Y.Z`, push, and publish the release with the zip and checksum attached (`gh release create vX.Y.Z build/*.zip build/*.sha256 --notes-file notes.md`). The app's updater shows the release notes and installs the zip after checking its signature.
 
 ## Credits
 

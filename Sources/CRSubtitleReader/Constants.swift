@@ -10,6 +10,9 @@ enum AppInfo {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
     }
 
+    /// Apple Developer team that signs and notarizes releases. The updater installs nothing else.
+    static let teamIdentifier = "JLNFD3HP3G"
+
     static let repositoryOwner = "AbdulmajeedAlmarzoqi"
     static let repositoryName = "cr-subtitle-reader"
     static let repositoryURL = URL(string: "https://github.com/\(repositoryOwner)/\(repositoryName)")!
