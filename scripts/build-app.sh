@@ -2,7 +2,7 @@
 # Release pipeline: archive with Xcode, sign with the team's Developer ID certificate (managed by
 # Xcode), notarize with Apple, staple the ticket, verify, and zip.
 #
-# Needs Xcode 16 or later with the Apple Developer account for team JLNFD3HP3G signed in under
+# Needs Xcode 16 or later with the project's Apple Developer account signed in under
 # Xcode > Settings > Accounts. Xcode creates and stores the Developer ID certificate itself.
 #
 #   ./scripts/build-app.sh            # release: archive + Developer ID + notarize + staple + zip

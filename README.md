@@ -111,7 +111,7 @@ The Xcode project is generated from `project.yml` with [XcodeGen](https://github
 
 ### Signing and notarization
 
-macOS ties the Safari and VoiceOver Automation permissions to the app's code-signing identity, so releases must always carry the same identity. They are signed with the Developer ID certificate of team `JLNFD3HP3G`, which Xcode creates and keeps for the signed-in Apple Developer account, and notarized by Apple: `xcodebuild -exportArchive` with `scripts/ExportOptions.plist` (`method: developer-id`, `destination: upload`) uploads the archive to the notary service, and `xcodebuild -exportNotarizedApp` returns the stapled app once Apple has approved it. The resulting designated requirement is based on the Team ID, so permissions survive updates and certificate renewals. The in-app updater verifies that a downloaded build is signed by that team before installing it.
+macOS ties the Safari and VoiceOver Automation permissions to the app's code-signing identity, so releases must always carry the same identity. They are signed with the developer's Developer ID certificate, which Xcode creates and keeps for the signed-in Apple Developer account, and notarized by Apple: `xcodebuild -exportArchive` with `scripts/ExportOptions.plist` (`method: developer-id`, `destination: upload`) uploads the archive to the notary service, and `xcodebuild -exportNotarizedApp` returns the stapled app once Apple has approved it. The resulting designated requirement is based on the Team ID, so permissions survive updates and certificate renewals. The in-app updater verifies that a downloaded build is signed by that team before installing it.
 
 ## Releasing
 
