@@ -17,7 +17,7 @@ All notable changes to CR Subtitle Reader are documented here.
 - Signed with an Apple Developer ID certificate and notarized by Apple. The app opens without any Gatekeeper warning; no more "Open Anyway".
 - The Safari and VoiceOver permissions are now tied to the developer's Team ID, so they survive updates and certificate renewals. Updating from an earlier version asks for them one last time because the signing identity changed.
 - The updater checks that a downloaded build carries a valid Developer ID signature from the project's team before installing it, and no longer removes the quarantine flag.
-- The app is now built from an Xcode project (generated from `project.yml` with XcodeGen); the release script archives, signs, notarizes and staples through Xcode. A `.mcp.json` connects Claude Code to Xcode's MCP tools for contributors.
+- The app is now built from an Xcode project (generated from `project.yml` with XcodeGen); the release script archives, signs, notarizes and staples through Xcode. A `.mcp.json` connects MCP-capable coding agents to Xcode's MCP tools for contributors.
 - The self-signed certificate script from 1.0.5 is gone.
 
 ## 1.0.5 — 2026-09-06
