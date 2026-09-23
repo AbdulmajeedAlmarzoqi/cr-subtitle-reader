@@ -49,8 +49,13 @@ targets:
       - path: Resources/CRSubtitleReader.entitlements
         buildPhase: none
         group: Resources
+    # XcodeGen (re)writes this file on every generation, so the entitlement lives here.
+    # com.apple.security.automation.apple-events is mandatory under the Hardened Runtime; without it
+    # every Apple Event to Safari and VoiceOver is refused silently (error -1743).
     entitlements:
       path: Resources/CRSubtitleReader.entitlements
+      properties:
+        com.apple.security.automation.apple-events: true
     settings:
       base:
         PRODUCT_NAME: CR Subtitle Reader

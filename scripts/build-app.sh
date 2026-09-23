@@ -76,6 +76,11 @@ echo "==> Verifying"
 xcrun stapler validate "$APP" | tail -1
 codesign --verify --deep --strict --verbose=1 "$APP"
 spctl -a -vv -t exec "$APP" 2>&1 | grep -E "source=|origin="
+if ! codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "com.apple.security.automation.apple-events"; then
+	echo "refusing to package: the app lacks the apple-events entitlement (check project.yml / Resources/CRSubtitleReader.entitlements)" >&2
+	exit 1
+fi
+echo "entitlement: apple-events OK"
 
 ZIP="build/CR-Subtitle-Reader-$VERSION.zip"
 rm -f "$ZIP" "$ZIP.sha256"

@@ -2,6 +2,10 @@
 
 All notable changes to CR Subtitle Reader are documented here.
 
+## 1.1.1 — 2026-09-23
+
+- Fixes 1.1.0, which shipped without the Apple Events entitlement: the new project generator had rewritten the entitlements file empty, so the app could not talk to Safari or VoiceOver. The entitlement is now declared in `project.yml` (the file is generated from it), and the release script refuses to package a build that lacks it. The 1.1.0 release was withdrawn.
+
 ## 1.1.0 — 2026-09-23
 
 - Signed with an Apple Developer ID certificate and notarized by Apple. The app opens without any Gatekeeper warning; no more "Open Anyway".
