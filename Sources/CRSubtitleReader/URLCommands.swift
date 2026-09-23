@@ -9,6 +9,7 @@ import AppKit
 ///   crsr://page/interrupt                    interrupt mode on/off (assertive live region, with VoiceOver's tone)
 ///   crsr://update/check                      check for updates and show the result
 ///   crsr://setup                             open the setup assistant
+///   crsr://access/grant                      ask macOS for access to the Userscripts folder
 ///   crsr://show                              bring the main window to the front
 /// Example: open -g "crsr://reader/toggle"
 @MainActor
@@ -30,6 +31,7 @@ enum URLCommands {
         case ["page", "repeat"]: state.sendPageCommand("repeat", label: "the repeat command")
         case ["update", "check"]: Task { await state.updates.check(userInitiated: true) }
         case ["setup"]: state.rerunSetup(); AppWindows.showMain()
+        case ["access", "grant"]: AppWindows.showMain(); state.grantScriptsFolderAccess()
         case ["show"]: AppWindows.showMain()
         default: Accessibility.announce("Unknown CR Subtitle Reader command: \(url.absoluteString)")
         }

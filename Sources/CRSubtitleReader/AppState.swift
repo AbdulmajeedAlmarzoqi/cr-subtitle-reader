@@ -17,6 +17,10 @@ final class AppState: ObservableObject {
     }
     @Published var showWizard: Bool
     @Published var installMessage: String = ""
+    /// Set after a failed install so the assistant stops retrying (and re-announcing) every few
+    /// seconds; cleared when the user grants access or picks another folder.
+    @Published private(set) var installFailed = false
+    private var lastInstallFailureAnnounced = ""
     @Published var launchAtLogin: Bool = LaunchAtLogin.isEnabled
     /// Keep a status item and stay running after the window closes. Off = a plain setup tool that
     /// quits with its window; subtitles are then read inside Safari only.
@@ -27,6 +31,7 @@ final class AppState: ObservableObject {
     private var cancellables: Set<AnyCancellable> = []
 
     private init() {
+        ScriptInstaller.restoreGrantedAccess()
         let bridge = AppleScriptBridge()
         self.bridge = bridge
         checker = PrerequisiteChecker(bridge: bridge)
@@ -49,8 +54,17 @@ final class AppState: ObservableObject {
     @discardableResult
     func installScript(quiet: Bool = false) -> Bool {
         let directory = ScriptInstaller.resolvedDirectory()
+        if ScriptInstaller.access(to: directory) == .denied {
+            installMessage = "macOS is not letting CR Subtitle Reader access the Userscripts folder yet. Use “Grant Access to the Userscripts Folder”."
+            installFailed = true
+            checker.refreshLocal()
+            Log.error(installMessage)
+            return false
+        }
         do {
             let result = try ScriptInstaller.install(to: directory)
+            installFailed = false
+            lastInstallFailureAnnounced = ""
             var message = "Installed CR Subtitle Reader \(result.version) into \(result.destination.deletingLastPathComponent().path)"
             if !result.removedLegacyFiles.isEmpty {
                 message += " (removed old copies: \(result.removedLegacyFiles.joined(separator: ", ")))"
@@ -62,16 +76,43 @@ final class AppState: ObservableObject {
             return true
         } catch {
             installMessage = "Could not install the script: \(error.localizedDescription)"
+            installFailed = true
             checker.refreshLocal()
-            Accessibility.announce(installMessage)
+            Log.error(installMessage)
+            // Say it once; the assistant keeps showing it on screen.
+            if !quiet && installMessage != lastInstallFailureAnnounced {
+                lastInstallFailureAnnounced = installMessage
+                Accessibility.announce(installMessage)
+            }
             return false
         }
     }
 
     func chooseScriptsFolder() {
         if ScriptInstaller.chooseDirectory() != nil {
+            installFailed = false
+            lastInstallFailureAnnounced = ""
             checker.refreshLocal()
         }
+    }
+
+    /// Asks macOS for access to the Userscripts folder, then installs the script right away.
+    func grantScriptsFolderAccess() {
+        guard ScriptInstaller.requestAccess(to: checker.scriptsDirectory) != nil else {
+            Accessibility.announce("Access was not granted.")
+            return
+        }
+        installFailed = false
+        lastInstallFailureAnnounced = ""
+        checker.refreshLocal()
+        if checker.scriptsFolderDenied {
+            installMessage = "macOS still refuses access to \(checker.scriptsDirectory.path). Choose the folder shown as Save Location in the Userscripts app, or change that location to a folder of your own."
+            Accessibility.announce(installMessage)
+            Log.error(installMessage)
+            return
+        }
+        Log.info("Access granted to \(checker.scriptsDirectory.path)")
+        installScript()
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -130,6 +171,9 @@ final class AppState: ObservableObject {
         checker.refreshLocal()
         if !checker.userscriptsInstalled {
             return RequirementIssue(step: .userscripts, message: "The Userscripts extension is missing.")
+        }
+        if checker.scriptsFolderDenied {
+            return RequirementIssue(step: .activate, message: "CR Subtitle Reader needs access to the Userscripts folder.")
         }
         if !checker.scriptInstalled {
             return RequirementIssue(step: .activate, message: "The subtitle script is missing from the Userscripts folder.")

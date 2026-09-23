@@ -98,7 +98,7 @@ struct SetupWizardView: View {
             openedCrunchyroll = false
             lastReload = nil
             state.checker.refreshLocal()
-            if !state.checker.scriptInstalled || !state.checker.scriptUpToDate { state.installScript() }
+            if !state.checker.scriptsFolderDenied && !state.installFailed && (!state.checker.scriptInstalled || !state.checker.scriptUpToDate) { state.installScript() }
             state.checker.probeSafari()
             startActivationWatch()
         default:
@@ -124,7 +124,11 @@ struct SetupWizardView: View {
             }
         case .activate:
             state.checker.refreshLocal()
-            if !state.checker.scriptInstalled { state.installScript() }
+            if state.checker.scriptsFolderDenied {
+                announceOnce("macOS needs your permission before the script can be placed in the Userscripts folder. Press Grant Access.")
+                return
+            }
+            if !state.checker.scriptInstalled && !state.installFailed { state.installScript() }
             if state.checker.safariJavaScript != .ok { state.checker.probeSafari() }
             guard state.checker.safariJavaScript == .ok else { return }
             if !openedCrunchyroll { startActivationWatch(); return }
@@ -253,7 +257,14 @@ struct SetupWizardView: View {
                 Text("1. In Safari, press Command+Comma and open the Extensions tab. Turn on Userscripts.")
                 Text("2. Select Userscripts in the list and allow it for crunchyroll.com, or choose “Allow on Every Website”.")
             }
-            StatusLine(label: "Script file", value: state.checker.installedScriptVersion.map { "Installed, version \($0)" } ?? "Not installed", ok: state.checker.scriptInstalled)
+            if state.checker.scriptsFolderDenied {
+                StatusLine(label: "Userscripts folder", value: "macOS is blocking access; press Grant Access", ok: false)
+                Text("macOS protects other apps' data, and the Userscripts folder belongs to the extension. Press the button below: an open dialog appears with the folder already selected, press Grant Access (Return) and macOS lets CR Subtitle Reader place its script there from now on. Shortcut: Command+G.")
+                Button("Grant Access to the Userscripts Folder…") { state.grantScriptsFolderAccess() }
+                    .keyboardShortcut("g", modifiers: .command)
+            } else {
+                StatusLine(label: "Script file", value: state.checker.installedScriptVersion.map { "Installed, version \($0)" } ?? "Not installed", ok: state.checker.scriptInstalled)
+            }
             StatusLine(label: "Script on Crunchyroll", value: activationStatusText, ok: activityOK(state.checker.scriptActivity))
             HStack {
                 Button("Open Safari") { state.checker.openSafari() }

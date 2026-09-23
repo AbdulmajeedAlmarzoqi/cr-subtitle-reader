@@ -81,6 +81,12 @@ if ! codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "com.apple.securi
 	exit 1
 fi
 echo "entitlement: apple-events OK"
+if [ ! -f "$APP/Contents/Resources/CRSubtitleReaderBridge.scpt" ] && [ ! -f "$APP/Contents/Resources/CRSubtitleReaderBridge.applescript" ]; then
+	echo "refusing to package: the AppleScript bridge is missing from the bundle" >&2
+	exit 1
+fi
+[ -f "$APP/Contents/Resources/cr_subtitle_reader.user.js" ] || { echo "refusing to package: the userscript is missing from the bundle" >&2; exit 1; }
+echo "bundle resources: bridge and userscript OK"
 
 ZIP="build/CR-Subtitle-Reader-$VERSION.zip"
 rm -f "$ZIP" "$ZIP.sha256"

@@ -20,23 +20,36 @@ final class AppleScriptBridge {
 
     var isLoaded: Bool { script != nil }
 
-    /// The AppleScript source, shown in the About window to credit the AppleScript work.
+    /// Xcode compiles .applescript resources into .scpt at build time; a plain .applescript
+    /// source is also accepted (development builds).
+    private static var compiledURL: URL? { Bundle.main.url(forResource: AppInfo.bridgeScriptResourceName, withExtension: "scpt") }
+    private static var sourceURL: URL? { Bundle.main.url(forResource: AppInfo.bridgeScriptResourceName, withExtension: "applescript") }
+
+    /// The AppleScript source, shown in the About window to credit the AppleScript work:
+    /// the shipped source file, or the decompiled text of the compiled script.
     static var bridgeSource: String? {
-        guard let url = Bundle.main.url(forResource: AppInfo.bridgeScriptResourceName, withExtension: "applescript") else { return nil }
-        return try? String(contentsOf: url, encoding: .utf8)
+        if let url = sourceURL, let text = try? String(contentsOf: url, encoding: .utf8) { return text }
+        if let url = compiledURL, let script = NSAppleScript(contentsOf: url, error: nil) { return script.source }
+        return nil
     }
 
     private func load() {
-        guard let source = Self.bridgeSource else {
+        var error: NSDictionary?
+        let candidate: NSAppleScript?
+        if let url = Self.compiledURL {
+            candidate = NSAppleScript(contentsOf: url, error: &error)
+        } else if let url = Self.sourceURL, let source = try? String(contentsOf: url, encoding: .utf8) {
+            candidate = NSAppleScript(source: source)
+        } else {
             loadError = "The AppleScript bridge is missing from the app bundle."
             Log.error(loadError ?? "")
             return
         }
-        guard let compiled = NSAppleScript(source: source) else {
-            loadError = "The AppleScript bridge could not be created."
+        guard let compiled = candidate else {
+            loadError = "The AppleScript bridge could not be loaded: \(Self.describe(error))"
+            Log.error(loadError ?? "")
             return
         }
-        var error: NSDictionary?
         if !compiled.compileAndReturnError(&error) {
             loadError = "The AppleScript bridge failed to compile: \(Self.describe(error))"
             Log.error(loadError ?? "")
@@ -44,7 +57,7 @@ final class AppleScriptBridge {
         }
         script = compiled
         loadError = nil
-        Log.info("AppleScript bridge compiled")
+        Log.info("AppleScript bridge loaded (\(Self.compiledURL != nil ? "precompiled" : "from source"))")
     }
 
     private static func fourCharCode(_ string: String) -> UInt32 {

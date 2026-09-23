@@ -31,7 +31,7 @@ It comes as a native macOS app that guides you through the setup step by step, i
    1. Install the Userscripts extension from the App Store (the page notices when it is installed).
    2. Safari access: choose **Allow** when macOS asks whether the app may control Safari, and in Safari turn on Settings > Advanced > "Show features for web developers", then Developer > **Allow JavaScript from Apple Events**.
    3. VoiceOver access: choose **Allow** when macOS asks, and in **VoiceOver Utility > General** turn on **Allow VoiceOver to be controlled with AppleScript**. VoiceOver confirms as soon as it works.
-   4. The app places the script in the Userscripts folder and opens crunchyroll.com. In Safari Settings > Extensions turn on Userscripts and allow it for crunchyroll.com; the page reports "Running" the moment the script responds.
+   4. The app places the script in the Userscripts folder and opens crunchyroll.com. macOS protects other apps' folders, so the first time the assistant shows a file dialog with the Userscripts folder already selected: press **Grant Access** once and the app may write there from then on. Then, in Safari Settings > Extensions, turn on Userscripts and allow it for crunchyroll.com; the page reports "Running" the moment the script responds.
    5. Decide whether the app should keep running in the menu bar (needed for speaking in the background), launch at login and check for updates by itself, then press **Finish**.
 4. Open any episode on Crunchyroll in Safari. You will hear "Subtitles loaded: …" and then every line as it appears.
 

@@ -50,6 +50,7 @@ final class PrerequisiteChecker: ObservableObject {
     @Published private(set) var userscriptsInstalled = false
     @Published private(set) var scriptsDirectory: URL = ScriptInstaller.resolvedDirectory()
     @Published private(set) var scriptsDirectoryExists = false
+    @Published private(set) var scriptsFolderAccess: FolderAccess = .missing
     @Published private(set) var installedScriptVersion: String?
     @Published private(set) var bundledScriptVersion: String? = ScriptInstaller.bundledVersion()
     @Published private(set) var voiceOverRunning = false
@@ -71,6 +72,7 @@ final class PrerequisiteChecker: ObservableObject {
     }
 
     var scriptInstalled: Bool { installedScriptVersion != nil }
+    var scriptsFolderDenied: Bool { scriptsFolderAccess == .denied }
 
     var scriptUpToDate: Bool {
         guard let installed = installedScriptVersion, let bundled = bundledScriptVersion else { return false }
@@ -82,7 +84,8 @@ final class PrerequisiteChecker: ObservableObject {
         userscriptsInstalled = NSWorkspace.shared.urlForApplication(withBundleIdentifier: AppInfo.userscriptsBundleIdentifier) != nil
         scriptsDirectory = ScriptInstaller.resolvedDirectory()
         scriptsDirectoryExists = ScriptInstaller.directoryExists(scriptsDirectory)
-        installedScriptVersion = ScriptInstaller.installedVersion(in: scriptsDirectory)
+        scriptsFolderAccess = ScriptInstaller.access(to: scriptsDirectory)
+        installedScriptVersion = scriptsFolderAccess == .accessible ? ScriptInstaller.installedVersion(in: scriptsDirectory) : nil
         bundledScriptVersion = ScriptInstaller.bundledVersion()
         voiceOverRunning = !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.VoiceOver").isEmpty
         crunchyrollWebApps = WebAppDetector.crunchyrollWebApps()

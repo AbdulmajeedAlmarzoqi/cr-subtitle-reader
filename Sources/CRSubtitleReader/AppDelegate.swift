@@ -50,7 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // A newer script shipped with this build? Refresh the copy inside the extension quietly.
             state.checker.refreshLocal()
             var scriptRefreshed = false
-            if state.checker.scriptInstalled && !state.checker.scriptUpToDate {
+            if !state.checker.scriptsFolderDenied && state.checker.scriptInstalled && !state.checker.scriptUpToDate {
                 scriptRefreshed = state.installScript(quiet: true)
             }
             if state.handleIssueIfAny() {

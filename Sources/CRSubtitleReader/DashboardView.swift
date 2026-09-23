@@ -11,11 +11,19 @@ struct DashboardView: View {
         Form {
             Section("Status") {
                 StatusLine(label: "Userscripts extension", value: state.checker.userscriptsInstalled ? "Installed" : "Not installed", ok: state.checker.userscriptsInstalled)
-                HStack {
-                    StatusLine(label: "Script file", value: scriptStatusText, ok: state.checker.scriptInstalled && state.checker.scriptUpToDate)
-                    if !state.checker.scriptInstalled || !state.checker.scriptUpToDate {
+                if state.checker.scriptsFolderDenied {
+                    HStack {
+                        StatusLine(label: "Userscripts folder", value: "macOS is blocking access", ok: false)
                         Spacer()
-                        Button(state.checker.scriptInstalled ? "Update Script" : "Install Script") { state.installScript() }
+                        Button("Grant Access…") { state.grantScriptsFolderAccess() }
+                    }
+                } else {
+                    HStack {
+                        StatusLine(label: "Script file", value: scriptStatusText, ok: state.checker.scriptInstalled && state.checker.scriptUpToDate)
+                        if !state.checker.scriptInstalled || !state.checker.scriptUpToDate {
+                            Spacer()
+                            Button(state.checker.scriptInstalled ? "Update Script" : "Install Script") { state.installScript() }
+                        }
                     }
                 }
                 StatusLine(label: "Safari access", value: probeText(state.checker.safariJavaScript), ok: probeOK(state.checker.safariJavaScript))

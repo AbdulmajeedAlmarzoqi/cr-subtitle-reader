@@ -48,6 +48,7 @@ enum PrefKey {
     static let skippedVersion = "skippedVersion"
     static let lastUpdateCheck = "lastUpdateCheck"
     static let declinedMoveToApplications = "declinedMoveToApplications"
+    static let scriptsFolderBookmark = "scriptsFolderBookmark"
     static let startReadingOnLaunch = "startReadingOnLaunch"
     static let wizardStep = "wizardStep"
     static let stayInMenuBar = "stayInMenuBar"

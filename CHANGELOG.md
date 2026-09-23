@@ -2,6 +2,12 @@
 
 All notable changes to CR Subtitle Reader are documented here.
 
+## 1.1.2 — 2026-09-23
+
+- Fixes 1.1.1: Xcode compiles the AppleScript bridge into a `.scpt` file at build time, and the app only looked for the `.applescript` source, so it could not load the bridge at all. It now loads the precompiled script (and still accepts the source in development builds). The release script also refuses to package a build whose bundle lacks the bridge or the userscript. 1.1.1 was withdrawn.
+- macOS protects other apps' data folders, and on macOS 27 that includes the Userscripts extension's scripts folder: the app was refused access without any prompt, so it could neither see nor place the script. The assistant now notices this and offers "Grant Access to the Userscripts Folder": a file dialog opens with the folder already selected, one press of Grant Access gives the app permanent access, and the grant is remembered.
+- The "Could not install the script" message was announced again every two seconds while the assistant kept retrying. It is now said once, and the assistant stops retrying until access is granted or another folder is chosen.
+
 ## 1.1.1 — 2026-09-23
 
 - Fixes 1.1.0, which shipped without the Apple Events entitlement: the new project generator had rewritten the entitlements file empty, so the app could not talk to Safari or VoiceOver. The entitlement is now declared in `project.yml` (the file is generated from it), and the release script refuses to package a build that lacks it. The 1.1.0 release was withdrawn.

@@ -1,6 +1,15 @@
 import Foundation
 import AppKit
 
+/// How the Userscripts folder looks from this app's point of view.
+enum FolderAccess: Equatable {
+    case accessible
+    /// The folder exists but macOS refuses access: since macOS 14, other apps' data containers
+    /// (~/Library/Containers/<app>/Data) are protected, and macOS 27 extends that protection.
+    case denied
+    case missing
+}
+
 /// Installs the bundled userscript into the Userscripts extension's scripts folder.
 enum ScriptInstaller {
     struct InstallResult {
@@ -56,6 +65,77 @@ enum ScriptInstaller {
     static func directoryExists(_ url: URL) -> Bool {
         var isDirectory: ObjCBool = false
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
+    }
+
+    /// Whether the app can actually read the folder. A protected container answers "permission
+    /// denied" to a directory listing even though the folder is there.
+    static func access(to directory: URL) -> FolderAccess {
+        do {
+            _ = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            return .accessible
+        } catch let error as NSError {
+            let posix = error.userInfo[NSUnderlyingErrorKey] as? NSError
+            let code = posix?.domain == NSPOSIXErrorDomain ? posix?.code : nil
+            if error.code == NSFileReadNoPermissionError || code == Int(EPERM) || code == Int(EACCES) {
+                return .denied
+            }
+            if error.code == NSFileReadNoSuchFileError || code == Int(ENOENT) {
+                // The scripts folder may not exist yet while the container does.
+                let parent = directory.deletingLastPathComponent()
+                if directoryExists(parent) {
+                    return access(to: parent) == .denied ? .denied : .missing
+                }
+                return .missing
+            }
+            return directoryExists(directory) ? .denied : .missing
+        }
+    }
+
+    // MARK: Access through the user's choice
+
+    /// Restores access granted earlier through the open panel (a security-scoped bookmark).
+    @discardableResult
+    static func restoreGrantedAccess() -> URL? {
+        guard let data = UserDefaults.standard.data(forKey: PrefKey.scriptsFolderBookmark) else { return nil }
+        var stale = false
+        guard let url = try? URL(resolvingBookmarkData: data, options: [.withSecurityScope, .withoutUI], relativeTo: nil, bookmarkDataIsStale: &stale) else {
+            return nil
+        }
+        _ = url.startAccessingSecurityScopedResource()
+        if stale, let fresh = try? url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil) {
+            UserDefaults.standard.set(fresh, forKey: PrefKey.scriptsFolderBookmark)
+        }
+        return url
+    }
+
+    private static func remember(_ url: URL) {
+        _ = url.startAccessingSecurityScopedResource()
+        if let data = try? url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil) {
+            UserDefaults.standard.set(data, forKey: PrefKey.scriptsFolderBookmark)
+        }
+    }
+
+    /// Asks macOS for access to the Userscripts folder the way the system intends: the user
+    /// confirms the (already selected) folder in an open panel, and macOS grants this app access
+    /// to it from then on. Returns the folder, or nil when the user cancelled.
+    @MainActor
+    static func requestAccess(to directory: URL) -> URL? {
+        let panel = NSOpenPanel()
+        panel.title = "Allow access to the Userscripts folder"
+        panel.message = "macOS protects other apps' data. The Userscripts scripts folder is already selected: press Grant Access so CR Subtitle Reader can place its script there."
+        panel.prompt = "Grant Access"
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.showsHiddenFiles = false
+        panel.directoryURL = directory
+        guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        remember(url)
+        if url.standardizedFileURL != directory.standardizedFileURL {
+            customDirectory = url
+        }
+        return url
     }
 
     static func bundledScriptURL() -> URL? {
@@ -140,6 +220,7 @@ enum ScriptInstaller {
         panel.allowsMultipleSelection = false
         panel.directoryURL = resolvedDirectory()
         guard panel.runModal() == .OK, let url = panel.url else { return nil }
+        remember(url)
         customDirectory = url
         return url
     }
